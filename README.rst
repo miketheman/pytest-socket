@@ -20,7 +20,7 @@ This `Pytest`_ plugin was generated with `Cookiecutter`_ along with `@hackebrot`
 Features
 --------
 
-* TODO
+* Disables all network calls flowing throguh Python's ``socket`` interface.
 
 
 Requirements
@@ -40,7 +40,14 @@ You can install "pytest-socket" via `pip`_ from `PyPI`_::
 Usage
 -----
 
-* TODO
+* Run ``pytest``, tests should fail on any access to ``socket`` or libraries using socket.
+* To enable specific tests use of ``socket``, pass in the fixture to the test:
+
+.. code:: python
+
+  def test_explicitly_enable_socket(enable_socket):
+      assert socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
 
 Contributing
 ------------
@@ -58,6 +65,14 @@ Issues
 
 If you encounter any problems, please `file an issue`_ along with a detailed description.
 
+
+References
+----------
+
+This plugin came about due to the efforts by `@hangtwenty`_ solving a `StackOverflow question`_,
+then converted into a pytest plugin by `@miketheman`_.
+
+
 .. _`Cookiecutter`: https://github.com/audreyr/cookiecutter
 .. _`@hackebrot`: https://github.com/hackebrot
 .. _`MIT`: http://opensource.org/licenses/MIT
@@ -67,3 +82,6 @@ If you encounter any problems, please `file an issue`_ along with a detailed des
 .. _`tox`: https://tox.readthedocs.io/en/latest/
 .. _`pip`: https://pypi.python.org/pypi/pip/
 .. _`PyPI`: https://pypi.python.org/pypi
+.. _`@hangtwenty`: https://github.com/hangtwenty
+.. _`StackOverflow question`: https://stackoverflow.com/a/30064664
+.. _`@miketheman`: https://github.com/miketheman
