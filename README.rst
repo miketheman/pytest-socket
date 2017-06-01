@@ -2,6 +2,12 @@
 pytest-socket
 =============
 
+.. image:: https://img.shields.io/pypi/v/pytest-socket.svg
+    :target: https://pypi.python.org/pypi/pytest-socket
+
+.. image:: https://img.shields.io/pypi/pyversions/pytest-socket.svg
+    :target: https://pypi.python.org/pypi/pytest-socket
+
 .. image:: https://travis-ci.org/miketheman/pytest-socket.svg?branch=master
     :target: https://travis-ci.org/miketheman/pytest-socket
     :alt: See Build Status on Travis CI
@@ -45,7 +51,7 @@ Usage
 
 .. code:: python
 
-  def test_explicitly_enable_socket(enable_socket):
+  def test_explicitly_enable_socket(socket_enabled):
       assert socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 
