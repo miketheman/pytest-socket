@@ -23,7 +23,7 @@ install:
   - pip install tox
 
 script:
-  - tox -e $TOX_ENV
+  - tox -e $TOX_ENV -v
 
 before_cache:
   - rm -rf $HOME/.cache/pip/log
