@@ -10,20 +10,11 @@ python:
   - "3.6"
   - "pypy"
 
-matrix:
-    include:
-      - python: 2.7
-        env: TOX_ENV=py27
-      - python: pypy
-        env: TOX_ENV=pypy
-      - python: 3.6
-        env: TOX_ENV=flake8
-
 install:
-  - pip install tox
+  - pip install tox-travis
 
 script:
-  - tox -e $TOX_ENV -v
+  - tox -v
 
 before_cache:
   - rm -rf $HOME/.cache/pip/log
