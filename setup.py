@@ -23,7 +23,7 @@ setup(
     description='Pytest Plugin to disable socket calls during tests',
     long_description=read('README.rst'),
     py_modules=['pytest_socket'],
-    install_requires=['pytest>=3.1.1'],
+    install_requires=['pytest>=3.0.0'],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Framework :: Pytest',
