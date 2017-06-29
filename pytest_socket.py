@@ -8,7 +8,7 @@ _true_socket = socket.socket
 
 class SocketBlockedError(RuntimeError):
     def __init__(self, *args, **kwargs):
-        super().__init__("A test tried to use socket.socket.")
+        super(SocketBlockedError, self).__init__("A test tried to use socket.socket.")
 
 
 def pytest_addoption(parser):
