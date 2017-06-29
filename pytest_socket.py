@@ -6,12 +6,30 @@ import pytest
 _true_socket = socket.socket
 
 
+class SocketBlockedError(RuntimeError):
+    def __init__(self, *args, **kwargs):
+        super().__init__("A test tried to use socket.socket.")
+
+
+def pytest_addoption(parser):
+    group = parser.getgroup('socket')
+    group.addoption(
+        '--disable-socket',
+        action='store_true',
+        dest='disable_socket',
+        help='Disable socket.socket by default to block network calls.'
+    )
+
+
 @pytest.fixture(autouse=True)
 def _socket_marker(request):
     if request.node.get_marker('disable_socket'):
         request.getfixturevalue('socket_disabled')
     if request.node.get_marker('enable_socket'):
         request.getfixturevalue('socket_enabled')
+
+    if request.config.getoption('--disable-socket'):
+        request.getfixturevalue('socket_disabled')
 
 
 @pytest.fixture
@@ -35,7 +53,7 @@ def disable_socket():
     """
 
     def guarded(*args, **kwargs):
-        raise RuntimeError("A test tried to use socket.socket.")
+        raise SocketBlockedError()
 
     socket.socket = guarded
 
