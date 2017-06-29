@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
+
 from pytest_socket import enable_socket
 
 
@@ -20,7 +21,7 @@ def assert_socket_blocked(result):
 def test_socket_enabled_by_default(testdir):
     testdir.makepyfile("""
         import socket
-        
+
         def test_socket():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     """)
@@ -80,7 +81,7 @@ def test_disable_socket_marker(testdir):
     testdir.makepyfile("""
         import pytest
         import socket
-        
+
         @pytest.mark.disable_socket
         def test_socket():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -94,7 +95,7 @@ def test_enable_socket_marker(testdir):
     testdir.makepyfile("""
         import pytest
         import socket
-        
+
         @pytest.mark.enable_socket
         def test_socket():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -110,7 +111,7 @@ def test_urllib_succeeds_by_default(testdir):
             from urllib.request import urlopen
         except ImportError:
             from urllib2 import urlopen
-        
+
         def test_disable_socket_urllib():
             assert urlopen('https://httpbin.org/get').getcode() == 200
     """)
@@ -158,18 +159,18 @@ def test_double_call_does_nothing(testdir):
         import pytest
         import pytest_socket
         import socket
-        
+
         def test_double_enabled():
             pytest_socket.enable_socket()
             pytest_socket.enable_socket()
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            
+
         def test_double_disabled():
             pytest_socket.disable_socket()
             pytest_socket.disable_socket()
             with pytest.raises(pytest_socket.SocketBlockedError):
                 socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            
+
         def test_disable_enable():
             pytest_socket.disable_socket()
             pytest_socket.enable_socket()
