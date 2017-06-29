@@ -113,7 +113,7 @@ def test_urllib_succeeds_by_default(testdir):
             from urllib2 import urlopen
 
         def test_disable_socket_urllib():
-            assert urlopen('https://httpbin.org/get').getcode() == 200
+            assert urlopen('http://httpbin.org/get').getcode() == 200
     """)
     result = testdir.runpytest("--verbose")
     result.assert_outcomes(1, 0, 0)
@@ -130,7 +130,7 @@ def test_enabled_urllib_succeeds(testdir):
 
         @pytest.mark.enable_socket
         def test_disable_socket_urllib():
-            assert urlopen('https://httpbin.org/get').getcode() == 200
+            assert urlopen('http://httpbin.org/get').getcode() == 200
     """)
     result = testdir.runpytest("--verbose", "--disable-socket")
     result.assert_outcomes(0, 0, 1)
@@ -147,7 +147,7 @@ def test_disabled_urllib_fails(testdir):
 
         @pytest.mark.disable_socket
         def test_disable_socket_urllib():
-            assert urlopen('https://httpbin.org/get').getcode() == 200
+            assert urlopen('http://httpbin.org/get').getcode() == 200
     """)
     result = testdir.runpytest("--verbose")
     result.assert_outcomes(0, 0, 1)
