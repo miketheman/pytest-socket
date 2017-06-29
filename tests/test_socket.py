@@ -1,33 +1,119 @@
 # -*- coding: utf-8 -*-
+import pytest
 
 
-def test_disabled_socket_fails(testdir):
+def assert_socket_blocked(result):
+    result.stdout.fnmatch_lines("""
+        *RuntimeError: A test tried to use socket.socket.*
+    """)
+
+
+def test_global_disable(testdir):
     testdir.makepyfile("""
+        import pytest
+        import pytest_socket
         import socket
+
+        @pytest.fixture(autouse=True)
+        def disable_socket_for_all():
+            pytest_socket.disable_socket()
+
         def test_socket():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     """)
     result = testdir.runpytest("--verbose")
     result.assert_outcomes(0, 0, 1)
-    result.stdout.fnmatch_lines("""
-        *RuntimeError: A test tried to use socket.socket without explicitly un-blocking it.*
-    """)
+    assert_socket_blocked(result)
 
 
-def test_disabled_httplib_fails(testdir):
+def test_disable_socket_marker(testdir):
     testdir.makepyfile("""
-        import httplib
-        def test_httplib():
-            httplib.HTTPConnection("scanme.nmap.org:80").request("GET", "/")
+        import pytest
+        import socket
+        
+        @pytest.mark.disable_socket
+        def test_socket():
+            socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     """)
     result = testdir.runpytest("--verbose")
     result.assert_outcomes(0, 0, 1)
-    result.stdout.fnmatch_lines("""
-        *RuntimeError: A test tried to use socket.socket without explicitly un-blocking it.*
+    assert_socket_blocked(result)
+
+
+def test_enable_socket_marker(testdir):
+    testdir.makepyfile("""
+        import pytest
+        import pytest_socket
+        import socket
+        
+        @pytest.fixture(autouse=True)
+        def disable_socket_for_all():
+            pytest_socket.disable_socket()
+        
+        @pytest.mark.enable_socket
+        def test_socket():
+            socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     """)
+    result = testdir.runpytest("--verbose")
+    result.assert_outcomes(0, 0, 1)
+    assert_socket_blocked(result)
 
 
-def test_enabling_while_enabled_does_nothing(testdir):
+def test_urllib_succeeds_by_default(testdir):
+    testdir.makepyfile("""
+        try:
+            from urllib.request import urlopen
+        except ImportError:
+            from urllib2 import urlopen
+        
+        def test_disable_socket_urllib():
+            assert urlopen('https://httpbin.org/get').getcode() == 200
+    """)
+    result = testdir.runpytest("--verbose")
+    result.assert_outcomes(0, 0, 1)
+    assert_socket_blocked(result)
+
+
+def test_enabled_urllib_succeeds(testdir):
+    testdir.makepyfile("""
+        import pytest
+        import pytest_socket
+        try:
+            from urllib.request import urlopen
+        except ImportError:
+            from urllib2 import urlopen
+
+        @pytest.fixture(autouse=True)
+        def disable_socket_for_all():
+            pytest_socket.disable_socket()
+
+        @pytest.mark.enable_socket
+        def test_disable_socket_urllib():
+            assert urlopen('https://httpbin.org/get').getcode() == 200
+    """)
+    result = testdir.runpytest("--verbose")
+    result.assert_outcomes(0, 0, 1)
+    assert_socket_blocked(result)
+
+
+def test_disabled_urllib_fails(testdir):
+    testdir.makepyfile("""
+        import pytest
+        try:
+            from urllib.request import urlopen
+        except ImportError:
+            from urllib2 import urlopen
+
+        @pytest.mark.disable_socket
+        def test_disable_socket_urllib():
+            assert urlopen('https://httpbin.org/get').getcode() == 200
+    """)
+    result = testdir.runpytest("--verbose")
+    result.assert_outcomes(0, 0, 1)
+    assert_socket_blocked(result)
+
+
+def test_double_enable_does_nothing(testdir):
     testdir.makepyfile("""
         import pytest_socket
         def test_enabled():
@@ -36,6 +122,8 @@ def test_enabling_while_enabled_does_nothing(testdir):
     """)
     result = testdir.runpytest("--verbose")
     result.assert_outcomes(1, 0, 0)
+    with pytest.raises(Exception):
+        assert_socket_blocked(result)
 
 
 def test_socket_enabled_fixture(testdir, socket_enabled):
@@ -46,11 +134,20 @@ def test_socket_enabled_fixture(testdir, socket_enabled):
     """)
     result = testdir.runpytest("--verbose")
     result.assert_outcomes(1, 0, 0)
+    with pytest.raises(Exception):
+        assert_socket_blocked(result)
 
 
 def test_mix_and_match(testdir, socket_enabled):
     testdir.makepyfile("""
+        import pytest
+        import pytest_socket
         import socket
+        
+        @pytest.fixture(autouse=True)
+        def disable_socket_for_all():
+            pytest_socket.disable_socket()
+
         def test_socket1():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         def test_socket_enabled(socket_enabled):
