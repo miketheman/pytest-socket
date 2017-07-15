@@ -26,13 +26,13 @@ This `Pytest`_ plugin was generated with `Cookiecutter`_ along with `@hackebrot`
 Features
 --------
 
-* Disables all network calls flowing throguh Python's ``socket`` interface.
+* Disables all network calls flowing through Python's ``socket`` interface.
 
 
 Requirements
 ------------
 
-* `Pytest`_ 3.1.1 or greater
+* `Pytest`_ 3.0.0 or greater
 
 
 Installation
@@ -46,12 +46,37 @@ You can install "pytest-socket" via `pip`_ from `PyPI`_::
 Usage
 -----
 
-* Run ``pytest``, tests should fail on any access to ``socket`` or libraries using socket.
-* To enable specific tests use of ``socket``, pass in the fixture to the test:
+* Run ``pytest --disable-socket``, tests should fail on any access to ``socket`` or libraries using
+  socket with a ``SocketBlockedError``.
 
-.. code:: python
+  To add this flag as the default behavior, add this section to your ``pytest.ini`` or ``setup.cfg``:
 
-  def test_explicitly_enable_socket(socket_enabled):
+  .. code:: ini
+
+    [pytest]
+    addopts = --disable-socket
+
+
+  or update your ``conftest.py`` to include:
+
+  .. code:: python
+
+    from pytest_socket import disable_socket
+
+    def pytest_runtest_setup():
+        disable_socket()
+
+
+* To enable specific tests use of ``socket``, pass in the fixture to the test or use a marker:
+
+  .. code:: python
+
+    def test_explicitly_enable_socket(socket_enabled):
+        assert socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+
+    @pytest.mark.enable_socket
+    def test_explicitly_enable_socket_with_mark():
       assert socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 
