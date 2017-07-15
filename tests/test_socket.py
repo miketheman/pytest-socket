@@ -61,6 +61,16 @@ def test_global_disable_via_cli_flag(testdir):
     assert_socket_blocked(result)
 
 
+def test_help_message(testdir):
+    result = testdir.runpytest(
+        '--help',
+    )
+    result.stdout.fnmatch_lines([
+        'socket:',
+        '*--disable-socket*Disable socket.socket by default to block network'
+    ])
+
+
 def test_global_disable_via_config(testdir):
     testdir.makepyfile("""
         import socket
