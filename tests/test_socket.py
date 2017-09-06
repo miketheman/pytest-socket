@@ -27,7 +27,7 @@ def test_socket_enabled_by_default(testdir):
     """)
     result = testdir.runpytest("--verbose")
     result.assert_outcomes(1, 0, 0)
-    with pytest.raises(Exception):
+    with pytest.raises(BaseException):
         assert_socket_blocked(result)
 
 
@@ -188,7 +188,7 @@ def test_double_call_does_nothing(testdir):
     """)
     result = testdir.runpytest("--verbose")
     result.assert_outcomes(3, 0, 0)
-    with pytest.raises(Exception):
+    with pytest.raises(BaseException):
         assert_socket_blocked(result)
 
 
@@ -200,7 +200,7 @@ def test_socket_enabled_fixture(testdir, socket_enabled):
     """)
     result = testdir.runpytest("--verbose")
     result.assert_outcomes(1, 0, 0)
-    with pytest.raises(Exception):
+    with pytest.raises(BaseException):
         assert_socket_blocked(result)
 
 
