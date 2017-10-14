@@ -1,5 +1,9 @@
 # Config file for automatic testing at travis-ci.org
 
+env:
+  global:
+    - CC_TEST_REPORTER_ID=fc447195f19e98b977d2e7d2332d15528c51e91473505e61b9eb1cc402dd676a
+
 sudo: false
 language: python
 python:
@@ -13,8 +17,16 @@ python:
 install:
   - pip install tox-travis
 
+before_script:
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+  - ./cc-test-reporter before-build
+
 script:
   - tox -v
+
+after_script:
+  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
 
 before_cache:
   - rm -rf $HOME/.cache/pip/log
