@@ -1,5 +1,5 @@
 ---
-engines:
+plugins:
   duplication:
     enabled: true
     config:
@@ -9,10 +9,7 @@ engines:
     enabled: true
   radon:
     enabled: true
-ratings:
-  paths:
-  - "**.py"
-exclude_paths:
+exclude_patterns:
 - "*.egg-info/"
 - .cache/
 - .tox/

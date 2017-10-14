@@ -13,20 +13,34 @@ python:
   - "3.5"
   - "3.6"
   - "pypy"
+matrix:
+  include:
+    - python: "3.6"
+      env: TOXENV=coverage
+    - python: "3.6"
+      env: TOXENV=flake8
 
 install:
   - pip install tox-travis
 
 before_script:
-  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-  - chmod +x ./cc-test-reporter
-  - ./cc-test-reporter before-build
+  - if [ "$TOXENV" = "coverage" ]; then
+      curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter;
+    fi
+  - if [ "$TOXENV" = "coverage" ]; then
+      chmod +x ./cc-test-reporter;
+    fi
+  - if [ "$TOXENV" = "coverage" ]; then
+      ./cc-test-reporter before-build;
+    fi
 
 script:
   - tox -v
 
 after_script:
-  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
+  - if [ "$TOXENV" = "coverage" ]; then
+      ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT;
+    fi
 
 before_cache:
   - rm -rf $HOME/.cache/pip/log
