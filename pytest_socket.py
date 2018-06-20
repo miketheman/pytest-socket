@@ -4,11 +4,21 @@ import socket
 import pytest
 
 _true_socket = socket.socket
+_true_connect = socket.socket.connect
 
 
 class SocketBlockedError(RuntimeError):
     def __init__(self, *args, **kwargs):
         super(SocketBlockedError, self).__init__("A test tried to use socket.socket.")
+
+
+class SocketConnectBlockedError(RuntimeError):
+    def __init__(self, allowed, host, *args, **kwargs):
+        if allowed:
+            allowed = ','.join(allowed)
+        super(SocketConnectBlockedError, self).__init__(
+            'A test tried to use socket.socket.connect() with host "{0}" (allowed: "{1}").'.format(host, allowed)
+        )
 
 
 def pytest_addoption(parser):
@@ -18,6 +28,12 @@ def pytest_addoption(parser):
         action='store_true',
         dest='disable_socket',
         help='Disable socket.socket by default to block network calls.'
+    )
+    group.addoption(
+        '--restrict-hosts',
+        dest='restrict_hosts',
+        metavar='ALLOWED_HOSTS_CSV',
+        help='Only allow specified hosts through socket.socket.connect((host, port)).'
     )
 
 
@@ -62,3 +78,47 @@ def enable_socket():
     """ re-enable socket.socket to enable the Internet. useful in testing.
     """
     socket.socket = _true_socket
+
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "disable_socket(): Disable socket connections for a specific test")
+    config.addinivalue_line("markers", "enable_socket(): Enable socket connections for a specific test")
+    config.addinivalue_line("markers", "restrict_hosts([hosts]): Restrict socket connection to defined list of hosts")
+
+
+def pytest_runtest_setup(item):
+    mark_restrictions = item.get_closest_marker('restrict_hosts')
+    cli_restrictions = item.config.getoption('--restrict-hosts')
+    hosts = None
+    if mark_restrictions:
+        hosts = mark_restrictions.args[0]
+    elif cli_restrictions:
+        hosts = cli_restrictions
+    socket_restrict_hosts(hosts)
+
+
+def pytest_runtest_teardown():
+    remove_host_restrictions()
+
+
+def socket_restrict_hosts(allowed=None):
+    """ disable socket.socket.connect() to disable the Internet. useful in testing.
+    """
+    if not allowed:
+        return
+    if isinstance(allowed, str):
+        allowed = allowed.split(',')
+
+    def guarded_connect(inst, address):
+        host, port = address
+        if allowed and host in allowed:
+            return _true_connect(inst, address)
+        raise SocketConnectBlockedError(allowed, host)
+
+    socket.socket.connect = guarded_connect
+
+
+def remove_host_restrictions():
+    """ restore socket.socket.connect() to allow access to the Internet. useful in testing.
+    """
+    socket.socket.connect = _true_connect
