@@ -101,21 +101,25 @@ def pytest_runtest_teardown():
     remove_host_restrictions()
 
 
+def host_from_connect_args(args):
+    address = args[0]
+    if isinstance(address, tuple) and isinstance(address[0], str):
+        return address[0]
+
+
 def socket_restrict_hosts(allowed=None):
     """ disable socket.socket.connect() to disable the Internet. useful in testing.
     """
-    if not allowed:
-        return
     if isinstance(allowed, str):
         allowed = allowed.split(',')
+    if not isinstance(allowed, list):
+        return
 
     def guarded_connect(inst, *args):
-        address = args[0]
-        if isinstance(address, tuple) and isinstance(address[0], str):
-            host = address[0]
-            if allowed and host in allowed:
-                return _true_connect(inst, *args)
-            raise SocketConnectBlockedError(allowed, host)
+        host = host_from_connect_args(args)
+        if host and host in allowed:
+            return _true_connect(inst, *args)
+        raise SocketConnectBlockedError(allowed, host)
 
     socket.socket.connect = guarded_connect
 
