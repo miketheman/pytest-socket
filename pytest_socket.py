@@ -109,11 +109,13 @@ def socket_restrict_hosts(allowed=None):
     if isinstance(allowed, str):
         allowed = allowed.split(',')
 
-    def guarded_connect(inst, address):
-        host, port = address
-        if allowed and host in allowed:
-            return _true_connect(inst, address)
-        raise SocketConnectBlockedError(allowed, host)
+    def guarded_connect(inst, *args):
+        address = args[0]
+        if isinstance(address, tuple) and isinstance(address[0], str):
+            host = address[0]
+            if allowed and host in allowed:
+                return _true_connect(inst, *args)
+            raise SocketConnectBlockedError(allowed, host)
 
     socket.socket.connect = guarded_connect
 
