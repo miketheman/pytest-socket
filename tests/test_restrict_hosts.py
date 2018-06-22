@@ -38,7 +38,7 @@ def assert_host_blocked(result, host):
 
 
 @pytest.fixture
-def assert_connect(testdir, httpserver):
+def assert_connect(httpserver, testdir):
     def assert_socket_connect(should_pass, **kwargs):
         # get the name of the calling function
         test_name = inspect.stack()[1][3]
@@ -177,7 +177,7 @@ def test_global_restrict_via_config_pass(testdir, httpserver):
     testdir.makepyfile("""
         import socket
 
-        def test_global_restrict_via_config_fail():
+        def test_global_restrict_via_config_pass():
             socket.socket().connect(('{0}', {1}))
     """.format(test_url.hostname, test_url.port))
     testdir.makeini("""
