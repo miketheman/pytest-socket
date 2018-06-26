@@ -16,7 +16,7 @@ pytest-socket
     :target: https://ci.appveyor.com/project/miketheman/pytest-socket/branch/master
     :alt: See Build Status on AppVeyor
 
-A plugin to use with Pytest to disable ``socket`` calls during tests to ensure network calls are prevented.
+A plugin to use with Pytest to disable or restrict ``socket`` calls during tests to ensure network calls are prevented.
 
 ----
 
@@ -77,7 +77,22 @@ Usage
 
     @pytest.mark.enable_socket
     def test_explicitly_enable_socket_with_mark():
-      assert socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        assert socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+* To allow only specific hosts per-test:
+
+  .. code:: python
+
+    @pytest.mark.allow_hosts(['127.0.0.1'])
+    def test_explicitly_enable_socket_with_mark():
+        assert socket.socket.connect(('127.0.0.1', 80))
+
+or for whole test run
+
+  .. code:: ini
+
+    [pytest]
+    addopts = --allow-hosts=127.0.0.1,127.0.1.1
 
 
 Contributing
