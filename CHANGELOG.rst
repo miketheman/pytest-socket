@@ -5,6 +5,14 @@ pytest-socket
 This document records all notable changes to `pytest-socket <https://pypi.python.org/pypi/pytest-socket>`_.
 This project attempts to adhere to `Semantic Versioning <http://semver.org/>`_.
 
+`0.3.0`_ (Unreleased)
+---------------------
+
+* Add support for allowing specific lists of hosts via IP Addresses
+* Change the inherited exception class in tests
+* Add codeclimate to travis output
+* Add coverage reporting
+* Drop support for Python 3.3
 
 `0.2.0`_ (2017-07-15)
 ---------------------
