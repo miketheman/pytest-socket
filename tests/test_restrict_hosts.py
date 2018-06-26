@@ -38,12 +38,11 @@ def assert_host_blocked(result, host):
 
 
 @pytest.fixture
-def assert_connect(httpserver, testdir):
+def assert_connect(httpbin, testdir):
     def assert_socket_connect(should_pass, **kwargs):
         # get the name of the calling function
         test_name = inspect.stack()[1][3]
-        httpserver.serve_content('ok')
-        test_url = urlparse(httpserver.url)
+        test_url = urlparse(httpbin.url)
 
         mark = ''
         cli_arg = kwargs.get('cli_arg', None)
@@ -51,9 +50,9 @@ def assert_connect(httpserver, testdir):
         mark_arg = kwargs.get('mark_arg', None)
 
         if mark_arg and isinstance(mark_arg, str):
-            mark = '@pytest.mark.restrict_hosts("{0}")'.format(mark_arg)
+            mark = '@pytest.mark.allow_hosts("{0}")'.format(mark_arg)
         elif mark_arg and isinstance(mark_arg, list):
-            mark = '@pytest.mark.restrict_hosts(["{0}"])'.format('","'.join(mark_arg))
+            mark = '@pytest.mark.allow_hosts(["{0}"])'.format('","'.join(mark_arg))
         code = code_template.format(test_url.hostname, test_url.port, test_name, mark)
         testdir.makepyfile(code)
 
@@ -87,7 +86,7 @@ def test_marker_help_message(testdir):
         '--markers',
     )
     result.stdout.fnmatch_lines([
-        '@pytest.mark.restrict_hosts([[]hosts[]]): Restrict socket connection to defined list of hosts',
+        '@pytest.mark.allow_hosts([[]hosts[]]): Restrict socket connection to defined list of hosts',
     ])
 
 
@@ -171,9 +170,8 @@ def test_global_restrict_via_config_fail(testdir):
     assert_host_blocked(result, '127.0.0.1')
 
 
-def test_global_restrict_via_config_pass(testdir, httpserver):
-    httpserver.serve_content('ok')
-    test_url = urlparse(httpserver.url)
+def test_global_restrict_via_config_pass(testdir, httpbin):
+    test_url = urlparse(httpbin.url)
     testdir.makepyfile("""
         import socket
 
@@ -188,18 +186,17 @@ def test_global_restrict_via_config_pass(testdir, httpserver):
     result.assert_outcomes(1, 0, 0)
 
 
-def test_test_isolation(testdir, httpserver):
-    httpserver.serve_content('ok')
-    test_url = urlparse(httpserver.url)
+def test_test_isolation(testdir, httpbin):
+    test_url = urlparse(httpbin.url)
     testdir.makepyfile("""
         import pytest
         import socket
 
-        @pytest.mark.restrict_hosts('{0}')
+        @pytest.mark.allow_hosts('{0}')
         def test_pass():
             socket.socket().connect(('{0}', {1}))
 
-        @pytest.mark.restrict_hosts('2.2.2.2')
+        @pytest.mark.allow_hosts('2.2.2.2')
         def test_fail():
             socket.socket().connect(('{0}', {1}))
 
@@ -211,18 +208,17 @@ def test_test_isolation(testdir, httpserver):
     assert_host_blocked(result, test_url.hostname)
 
 
-def test_conflicting_cli_vs_marks(testdir, httpserver):
-    httpserver.serve_content('ok')
-    test_url = urlparse(httpserver.url)
+def test_conflicting_cli_vs_marks(testdir, httpbin):
+    test_url = urlparse(httpbin.url)
     testdir.makepyfile("""
         import pytest
         import socket
 
-        @pytest.mark.restrict_hosts('{0}')
+        @pytest.mark.allow_hosts('{0}')
         def test_pass():
             socket.socket().connect(('{0}', {1}))
 
-        @pytest.mark.restrict_hosts('2.2.2.2')
+        @pytest.mark.allow_hosts('2.2.2.2')
         def test_fail():
             socket.socket().connect(('{0}', {1}))
 

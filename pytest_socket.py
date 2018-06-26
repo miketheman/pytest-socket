@@ -31,7 +31,7 @@ def pytest_addoption(parser):
     )
     group.addoption(
         '--restrict-hosts',
-        dest='restrict_hosts',
+        dest='allow_hosts',
         metavar='ALLOWED_HOSTS_CSV',
         help='Only allow specified hosts through socket.socket.connect((host, port)).'
     )
@@ -83,18 +83,18 @@ def enable_socket():
 def pytest_configure(config):
     config.addinivalue_line("markers", "disable_socket(): Disable socket connections for a specific test")
     config.addinivalue_line("markers", "enable_socket(): Enable socket connections for a specific test")
-    config.addinivalue_line("markers", "restrict_hosts([hosts]): Restrict socket connection to defined list of hosts")
+    config.addinivalue_line("markers", "allow_hosts([hosts]): Restrict socket connection to defined list of hosts")
 
 
 def pytest_runtest_setup(item):
-    mark_restrictions = item.get_closest_marker('restrict_hosts')
+    mark_restrictions = item.get_closest_marker('allow_hosts')
     cli_restrictions = item.config.getoption('--restrict-hosts')
     hosts = None
     if mark_restrictions:
         hosts = mark_restrictions.args[0]
     elif cli_restrictions:
         hosts = cli_restrictions
-    socket_restrict_hosts(hosts)
+    socket_allow_hosts(hosts)
 
 
 def pytest_runtest_teardown():
@@ -107,7 +107,7 @@ def host_from_connect_args(args):
         return address[0]
 
 
-def socket_restrict_hosts(allowed=None):
+def socket_allow_hosts(allowed=None):
     """ disable socket.socket.connect() to disable the Internet. useful in testing.
     """
     if isinstance(allowed, str):

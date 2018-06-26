@@ -83,7 +83,7 @@ Usage
 
   .. code:: python
 
-    @pytest.mark.restrict_hosts(['127.0.0.1'])
+    @pytest.mark.allow_hosts(['127.0.0.1'])
     def test_explicitly_enable_socket_with_mark():
         assert socket.socket.connect(('127.0.0.1', 80))
 
