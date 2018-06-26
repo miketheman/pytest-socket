@@ -57,7 +57,7 @@ def assert_connect(httpbin, testdir):
         testdir.makepyfile(code)
 
         if cli_arg:
-            result = testdir.runpytest("--verbose", '--restrict-hosts={0}'.format(cli_arg))
+            result = testdir.runpytest("--verbose", '--allow-hosts={0}'.format(cli_arg))
         else:
             result = testdir.runpytest("--verbose")
 
@@ -75,7 +75,7 @@ def test_help_message(testdir):
     )
     result.stdout.fnmatch_lines([
         'socket:',
-        '*--restrict-hosts=ALLOWED_HOSTS_CSV',
+        '*--allow-hosts=ALLOWED_HOSTS_CSV',
         '*Only allow specified hosts through',
         '*socket.socket.connect((host, port)).'
     ])
@@ -163,7 +163,7 @@ def test_global_restrict_via_config_fail(testdir):
     """)
     testdir.makeini("""
         [pytest]
-        addopts = --restrict-hosts=2.2.2.2
+        addopts = --allow-hosts=2.2.2.2
     """)
     result = testdir.runpytest("--verbose")
     result.assert_outcomes(0, 0, 1)
@@ -180,7 +180,7 @@ def test_global_restrict_via_config_pass(testdir, httpbin):
     """.format(test_url.hostname, test_url.port))
     testdir.makeini("""
         [pytest]
-        addopts = --restrict-hosts={0}
+        addopts = --allow-hosts={0}
     """.format(test_url.hostname))
     result = testdir.runpytest("--verbose")
     result.assert_outcomes(1, 0, 0)
@@ -225,7 +225,7 @@ def test_conflicting_cli_vs_marks(testdir, httpbin):
         def test_fail_2():
             socket.socket().connect(('2.2.2.2', {1}))
     """.format(test_url.hostname, test_url.port))
-    result = testdir.runpytest("--verbose", '--restrict-hosts=1.2.3.4')
+    result = testdir.runpytest("--verbose", '--allow-hosts=1.2.3.4')
     result.assert_outcomes(1, 0, 2)
     assert_host_blocked(result, '2.2.2.2')
     assert_host_blocked(result, test_url.hostname)

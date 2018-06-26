@@ -30,7 +30,7 @@ def pytest_addoption(parser):
         help='Disable socket.socket by default to block network calls.'
     )
     group.addoption(
-        '--restrict-hosts',
+        '--allow-hosts',
         dest='allow_hosts',
         metavar='ALLOWED_HOSTS_CSV',
         help='Only allow specified hosts through socket.socket.connect((host, port)).'
@@ -88,7 +88,7 @@ def pytest_configure(config):
 
 def pytest_runtest_setup(item):
     mark_restrictions = item.get_closest_marker('allow_hosts')
-    cli_restrictions = item.config.getoption('--restrict-hosts')
+    cli_restrictions = item.config.getoption('--allow-hosts')
     hosts = None
     if mark_restrictions:
         hosts = mark_restrictions.args[0]

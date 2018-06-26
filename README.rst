@@ -92,7 +92,7 @@ or for whole test run
   .. code:: ini
 
     [pytest]
-    addopts = --restrict-hosts=127.0.0.1,127.0.1.1
+    addopts = --allow-hosts=127.0.0.1,127.0.1.1
 
 
 Contributing
