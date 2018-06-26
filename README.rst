@@ -16,6 +16,10 @@ pytest-socket
     :target: https://ci.appveyor.com/project/miketheman/pytest-socket/branch/master
     :alt: See Build Status on AppVeyor
 
+.. image:: https://api.codeclimate.com/v1/badges/1608a75b1c3a20211992/maintainability
+   :target: https://codeclimate.com/github/miketheman/pytest-socket/maintainability
+   :alt: Maintainability
+
 A plugin to use with Pytest to disable or restrict ``socket`` calls during tests to ensure network calls are prevented.
 
 ----
