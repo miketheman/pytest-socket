@@ -20,8 +20,10 @@ connect_code_template = """
         socket.socket().connect(('{0}', {1}))
 """
 
+# `contextlib` used because otherwise 2.7 was occasionally hanging due to exception cases:
 urlopen_code_template = """
     import pytest
+    import contextlib
     try:
         from urllib.request import urlopen
     except ImportError:
@@ -29,7 +31,8 @@ urlopen_code_template = """
 
     {3}
     def {2}():
-        assert urlopen('http://{0}:{1}/').getcode() == 200
+        with contextlib.closing(urlopen('http://{0}:{1}/')) as x:
+            assert x.getcode() == 200
 """
 
 
@@ -142,7 +145,7 @@ def test_mark_cli_conflict_mark_wins_connect_disabled(assert_connect):
     assert_connect(False, mark_arg=['1.2.3.4'], cli_arg=localhost)
 
 
-def test_default_urllib_succeeds_by_default(assert_connect):
+def test_default_urlopen_succeeds_by_default(assert_connect):
     assert_connect(True, code_template=urlopen_code_template)
 
 
