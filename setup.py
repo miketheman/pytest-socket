@@ -13,7 +13,7 @@ def read(fname):
 
 setup(
     name='pytest-socket',
-    version='0.2.0',
+    version='0.3.0',
     author='Mike Fiedler',
     author_email='miketheman@gmail.com',
     maintainer='Mike Fiedler',
