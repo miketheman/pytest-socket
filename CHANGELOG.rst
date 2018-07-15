@@ -5,7 +5,7 @@ pytest-socket
 This document records all notable changes to `pytest-socket <https://pypi.python.org/pypi/pytest-socket>`_.
 This project attempts to adhere to `Semantic Versioning <http://semver.org/>`_.
 
-`0.3.0`_ (Unreleased)
+`0.3.0`_ (2018-07-15)
 ---------------------
 
 * Add support for allowing specific lists of hosts via IP Addresses
