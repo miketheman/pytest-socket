@@ -5,6 +5,11 @@ pytest-socket
 This document records all notable changes to `pytest-socket <https://pypi.python.org/pypi/pytest-socket>`_.
 This project attempts to adhere to `Semantic Versioning <http://semver.org/>`_.
 
+`0.3.1`_ (2018-07-16)
+---------------------
+
+* Update minimum required pytest version
+
 `0.3.0`_ (2018-07-15)
 ---------------------
 
@@ -32,3 +37,5 @@ This project attempts to adhere to `Semantic Versioning <http://semver.org/>`_.
 
 .. _0.1.0: https://github.com/miketheman/pytest-socket/releases/tag/0.1.0
 .. _0.2.0: https://github.com/miketheman/pytest-socket/compare/0.1.0...0.2.0
+.. _0.3.0: https://github.com/miketheman/pytest-socket/compare/0.2.0...0.3.0
+.. _0.3.1: https://github.com/miketheman/pytest-socket/compare/0.3.0...0.3.1
