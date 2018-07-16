@@ -36,7 +36,7 @@ Features
 Requirements
 ------------
 
-* `Pytest`_ 3.0.0 or greater
+* `Pytest`_ 3.6.3 or greater
 
 
 Installation
