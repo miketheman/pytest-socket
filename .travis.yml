@@ -4,14 +4,18 @@ env:
   global:
     - CC_TEST_REPORTER_ID=fc447195f19e98b977d2e7d2332d15528c51e91473505e61b9eb1cc402dd676a
 
-sudo: false
+# Required for 3.7 for now. See https://github.com/travis-ci/travis-ci/issues/9069#issuecomment-425720905
+sudo: required
+dist: xenial
 language: python
+
 python:
   - "2.7"
   - "3.4"
   - "3.5"
   - "3.6"
-  - "pypy"
+  - "3.7"
+  - "pypy3.5"
 matrix:
   include:
     - python: "3.6"
