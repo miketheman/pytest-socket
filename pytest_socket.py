@@ -39,9 +39,9 @@ def pytest_addoption(parser):
 
 @pytest.fixture(autouse=True)
 def _socket_marker(request):
-    if request.node.get_marker('disable_socket'):
+    if request.node.get_closest_marker('disable_socket'):
         request.getfixturevalue('socket_disabled')
-    if request.node.get_marker('enable_socket'):
+    if request.node.get_closest_marker('enable_socket'):
         request.getfixturevalue('socket_enabled')
 
     if request.config.getoption('--disable-socket'):
