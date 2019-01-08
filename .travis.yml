@@ -15,7 +15,6 @@ python:
   - "3.5"
   - "3.6"
   - "3.7"
-  - "pypy3.5"
 matrix:
   include:
     - python: "3.6"
