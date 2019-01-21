@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import socket
-
+import sys
 import pytest
 
 _true_socket = socket.socket
@@ -103,8 +103,15 @@ def pytest_runtest_teardown():
 
 def host_from_connect_args(args):
     address = args[0]
-    if isinstance(address, tuple) and isinstance(address[0], str):
-        return address[0]
+
+    if isinstance(address, tuple):
+        host = address[0]
+        if sys.version_info[0] >= 3:
+            if isinstance(host, str):
+                return host
+        else:
+            if isinstance(host, str) or isinstance(host, unicode):  # noqa F821
+                return host
 
 
 def socket_allow_hosts(allowed=None):
