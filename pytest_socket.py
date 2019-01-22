@@ -5,6 +5,7 @@ import pytest
 
 _true_socket = socket.socket
 _true_connect = socket.socket.connect
+is_py2 = sys.version_info[0] == 2
 
 
 class SocketBlockedError(RuntimeError):
@@ -101,17 +102,26 @@ def pytest_runtest_teardown():
     remove_host_restrictions()
 
 
+def host_from_address(address):
+    host = address[0]
+    if isinstance(host, str):
+        return host
+
+
+def host_from_address_py2(address):
+    host = address[0]
+    if isinstance(host, str) or isinstance(host, unicode):  # noqa F821
+        return host
+
+
 def host_from_connect_args(args):
     address = args[0]
 
     if isinstance(address, tuple):
-        host = address[0]
-        if sys.version_info[0] >= 3:
-            if isinstance(host, str):
-                return host
+        if is_py2:
+            return host_from_address_py2(address)
         else:
-            if isinstance(host, str) or isinstance(host, unicode):  # noqa F821
-                return host
+            return host_from_address(address)
 
 
 def socket_allow_hosts(allowed=None):
