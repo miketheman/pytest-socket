@@ -5,6 +5,11 @@ pytest-socket
 This document records all notable changes to `pytest-socket <https://pypi.python.org/pypi/pytest-socket>`_.
 This project attempts to adhere to `Semantic Versioning <http://semver.org/>`_.
 
+`0.3.3`_ (2019-02-09)
+---------------------
+
+* Fix hostname check when unicode on Python 2.7.x #22
+
 `0.3.2`_ (2019-01-07)
 ---------------------
 
@@ -47,3 +52,4 @@ This project attempts to adhere to `Semantic Versioning <http://semver.org/>`_.
 .. _0.3.0: https://github.com/miketheman/pytest-socket/compare/0.2.0...0.3.0
 .. _0.3.1: https://github.com/miketheman/pytest-socket/compare/0.3.0...0.3.1
 .. _0.3.2: https://github.com/miketheman/pytest-socket/compare/0.3.1...0.3.2
+.. _0.3.3: https://github.com/miketheman/pytest-socket/compare/0.3.2...0.3.3
