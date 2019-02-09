@@ -20,6 +20,15 @@ connect_code_template = """
         socket.socket().connect(('{0}', {1}))
 """
 
+connect_unicode_code_template = """
+    import socket
+    import pytest
+
+    {3}
+    def {2}():
+        socket.socket().connect((u'{0}', {1}))
+"""
+
 # `contextlib` used because otherwise 2.7 was occasionally hanging due to exception cases:
 urlopen_code_template = """
     import pytest
@@ -101,6 +110,10 @@ def test_single_cli_arg_connect_enabled(assert_connect):
     assert_connect(True, cli_arg=localhost)
 
 
+def test_single_cli_arg_connect_unicode_enabled(assert_connect):
+    assert_connect(True, cli_arg=localhost, code_template=connect_unicode_code_template)
+
+
 def test_multiple_cli_arg_connect_enabled(assert_connect):
     assert_connect(True, cli_arg=localhost + ',1.2.3.4')
 
@@ -122,7 +135,7 @@ def test_mark_cli_conflict_mark_wins_connect_enabled(assert_connect):
 
 
 def test_single_cli_arg_connect_disabled(assert_connect):
-    assert_connect(False, cli_arg='1.2.3.4')
+    assert_connect(False, cli_arg='1.2.3.4', code_template=connect_unicode_code_template)
 
 
 def test_multiple_cli_arg_connect_disabled(assert_connect):
