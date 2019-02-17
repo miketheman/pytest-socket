@@ -1,5 +1,3 @@
-[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmiketheman%2Fpytest-socket.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmiketheman%2Fpytest-socket?ref=badge_shield)
-
 =============
 pytest-socket
 =============
@@ -21,6 +19,11 @@ pytest-socket
 .. image:: https://api.codeclimate.com/v1/badges/1608a75b1c3a20211992/maintainability
    :target: https://codeclimate.com/github/miketheman/pytest-socket/maintainability
    :alt: Maintainability
+
+.. image:: https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmiketheman%2Fpytest-socket.svg?type=shield
+   :target: https://app.fossa.io/projects/git%2Bgithub.com%2Fmiketheman%2Fpytest-socket?ref=badge_shield
+   :alt: FOSSA Status
+
 
 A plugin to use with Pytest to disable or restrict ``socket`` calls during tests to ensure network calls are prevented.
 
@@ -111,6 +114,9 @@ License
 
 Distributed under the terms of the `MIT`_ license, "pytest-socket" is free and open source software
 
+.. image:: https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmiketheman%2Fpytest-socket.svg?type=large
+   :target: https://app.fossa.io/projects/git%2Bgithub.com%2Fmiketheman%2Fpytest-socket?ref=badge_large
+   :alt: FOSSA Status
 
 Issues
 ------
@@ -137,7 +143,3 @@ then converted into a pytest plugin by `@miketheman`_.
 .. _`@hangtwenty`: https://github.com/hangtwenty
 .. _`StackOverflow question`: https://stackoverflow.com/a/30064664
 .. _`@miketheman`: https://github.com/miketheman
-
-
-## License
-[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmiketheman%2Fpytest-socket.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmiketheman%2Fpytest-socket?ref=badge_large)
