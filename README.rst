@@ -1,3 +1,5 @@
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmiketheman%2Fpytest-socket.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmiketheman%2Fpytest-socket?ref=badge_shield)
+
 =============
 pytest-socket
 =============
@@ -135,3 +137,7 @@ then converted into a pytest plugin by `@miketheman`_.
 .. _`@hangtwenty`: https://github.com/hangtwenty
 .. _`StackOverflow question`: https://stackoverflow.com/a/30064664
 .. _`@miketheman`: https://github.com/miketheman
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmiketheman%2Fpytest-socket.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmiketheman%2Fpytest-socket?ref=badge_large)
