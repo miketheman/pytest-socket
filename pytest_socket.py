@@ -40,13 +40,16 @@ def pytest_addoption(parser):
 
 @pytest.fixture(autouse=True)
 def _socket_marker(request):
+    """ The last option to set the fixture wins priority.
+    The expected behavior is that higher granularity options should
+    override lower granularity options.
+    """
+    if request.config.getoption('--disable-socket'):
+        request.getfixturevalue('socket_disabled')
     if request.node.get_closest_marker('disable_socket'):
         request.getfixturevalue('socket_disabled')
     if request.node.get_closest_marker('enable_socket'):
         request.getfixturevalue('socket_enabled')
-
-    if request.config.getoption('--disable-socket'):
-        request.getfixturevalue('socket_disabled')
 
 
 @pytest.fixture
