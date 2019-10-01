@@ -67,7 +67,7 @@ def test_help_message(testdir):
     )
     result.stdout.fnmatch_lines([
         'socket:',
-        '*--disable-socket*Disable socket.socket by default to block network'
+        '*--disable-socket*Disable socket.socket by default to block network*'
     ])
 
 
