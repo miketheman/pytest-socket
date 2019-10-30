@@ -24,6 +24,7 @@ init:
 
 install:
   - "%PYTHON%/Scripts/easy_install -U pip"
+  - "%PYTHON%/Scripts/pip install -U virtualenv"
   - "%PYTHON%/Scripts/pip install tox"
   - "%PYTHON%/Scripts/pip install wheel"
 
