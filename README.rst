@@ -16,6 +16,10 @@ pytest-socket
     :target: https://ci.appveyor.com/project/miketheman/pytest-socket/branch/master
     :alt: See Build Status on AppVeyor
 
+.. image:: https://github.com/miketheman/pytest-socket/workflows/Python%20Tests/badge.svg
+    :target: https://github.com/miketheman/pytest-socket/actions?query=workflow%3A%22Python+Tests%22
+    :alt: Python Tests
+
 .. image:: https://api.codeclimate.com/v1/badges/1608a75b1c3a20211992/maintainability
    :target: https://codeclimate.com/github/miketheman/pytest-socket/maintainability
    :alt: Maintainability
