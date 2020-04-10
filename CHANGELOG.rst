@@ -5,6 +5,17 @@ pytest-socket
 This document records all notable changes to `pytest-socket <https://pypi.python.org/pypi/pytest-socket>`_.
 This project attempts to adhere to `Semantic Versioning <http://semver.org/>`_.
 
+`0.3.4`_ (2020-04-10)
+---------------------
+
+Maintenance release.
+
+* Drop support for unsupported versions of Python #23
+* Convert toolchain from pip/tox/twine to poetry
+* Replace TravisCI and Appveyor with GitHub Actions #36
+* Update for correct test output #31
+* Add renovatebot for dependecy updates #26
+
 `0.3.3`_ (2019-02-09)
 ---------------------
 
@@ -53,3 +64,4 @@ This project attempts to adhere to `Semantic Versioning <http://semver.org/>`_.
 .. _0.3.1: https://github.com/miketheman/pytest-socket/compare/0.3.0...0.3.1
 .. _0.3.2: https://github.com/miketheman/pytest-socket/compare/0.3.1...0.3.2
 .. _0.3.3: https://github.com/miketheman/pytest-socket/compare/0.3.2...0.3.3
+.. _0.3.4: https://github.com/miketheman/pytest-socket/compare/0.3.3...0.3.4
