@@ -1,13 +1,8 @@
 # -*- coding: utf-8 -*-
-import pytest
-
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse
-
 import inspect
+from urllib.parse import urlparse
 
+import pytest
 
 localhost = '127.0.0.1'
 

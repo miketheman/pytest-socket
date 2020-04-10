@@ -22,8 +22,8 @@ dist: clean poetry.lock
 	@poetry build
 
 testrelease: dist
-	# Requires a `[pypitest]` section in ~/.pypirc
-	@twine upload -r pypitest dist/*
+	# Requires config: `repositories.testpypi.url = "https://test.pypi.org/simple"`
+	@poetry publish --repository testpypi
 
 release: dist
-	@twine upload dist/*
+	@poetry publish
