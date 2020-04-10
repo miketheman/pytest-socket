@@ -1,25 +1,29 @@
-.PHONY: all clean test
+.PHONY: all clean poetry test dist testrelease release
 
-TOX := $(shell command -v tox 2> /dev/null)
+POETRY := $(shell command -v poetry 2> /dev/null)
 
 all: test
 
 clean:
-	@find . -name \*.pyc -name __pycache__ -delete
-	@rm -fr .cache/ .coverage* .pytest_cache/ .tox/ *.egg-info/ dist/ htmlcov/
+	@find . -name \*.pyc -delete
+	@find . -name __pycache__ -delete
+	@rm -fr .cache/ .coverage .pytest_cache/ *.egg-info/ dist/ htmlcov/
 
-test:
-ifndef TOX
-	$(error "tox is not available, run `pip install tox`")
+poetry.lock pytest_socket.egg-info/ :
+ifndef POETRY
+	$(error "poetry is not available, please install it first.")
 endif
-	@tox
+	@poetry install
 
-build: clean
-	@python setup.py sdist
+test: pytest_socket.egg-info/
+	@poetry run pytest
 
-testrelease: build
+dist: clean poetry.lock
+	@poetry build
+
+testrelease: dist
 	# Requires a `[pypitest]` section in ~/.pypirc
 	@twine upload -r pypitest dist/*
 
-release: build
+release: dist
 	@twine upload dist/*

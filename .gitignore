@@ -72,3 +72,6 @@ target/
 .python-version
 
 .pytest_cache/
+
+# poetry lock file - for libraries only
+poetry.lock
