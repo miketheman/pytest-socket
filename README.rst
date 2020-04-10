@@ -8,14 +8,6 @@ pytest-socket
 .. image:: https://img.shields.io/pypi/pyversions/pytest-socket.svg
     :target: https://pypi.python.org/pypi/pytest-socket
 
-.. image:: https://travis-ci.org/miketheman/pytest-socket.svg?branch=master
-    :target: https://travis-ci.org/miketheman/pytest-socket
-    :alt: See Build Status on Travis CI
-
-.. image:: https://ci.appveyor.com/api/projects/status/github/miketheman/pytest-socket?branch=master&svg=true
-    :target: https://ci.appveyor.com/project/miketheman/pytest-socket/branch/master
-    :alt: See Build Status on AppVeyor
-
 .. image:: https://github.com/miketheman/pytest-socket/workflows/Python%20Tests/badge.svg
     :target: https://github.com/miketheman/pytest-socket/actions?query=workflow%3A%22Python+Tests%22
     :alt: Python Tests
