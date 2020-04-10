@@ -1,0 +1,2 @@
+[report]
+include = *pytest_socket*

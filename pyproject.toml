@@ -1,0 +1,46 @@
+[tool.poetry]
+name = "pytest-socket"
+version = "0.3.3"
+description = "Pytest Plugin to disable socket calls during tests"
+authors = ["Mike Fiedler <miketheman@gmail.com>"]
+license = "MIT"
+readme = "README.rst"
+homepage = "https://pypi.org/project/pytest-socket/"
+repository = "https://github.com/miketheman/pytest-socket"
+include = [
+    "LICENSE",
+    "README.rst",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: Pytest",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Testing",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.5",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: MIT License",
+]
+
+[tool.poetry.dependencies]
+python = "^3.5"
+pytest = ">=3.6.3"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.4"
+pytest-cov = "^2.8.1"
+pytest-httpbin = "^1.0"
+
+[tool.poetry.plugins.pytest11]
+socket = 'pytest_socket'
+
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/miketheman/pytest-socket/issues"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

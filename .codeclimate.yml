@@ -12,7 +12,6 @@ plugins:
 exclude_patterns:
 - "*.egg-info/"
 - .cache/
-- .tox/
 - __pycache__/
 - dist/
 - htmlcov/
