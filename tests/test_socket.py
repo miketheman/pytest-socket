@@ -21,6 +21,7 @@ def reenable_socket():
 
 
 def assert_socket_blocked(result):
+    result.assert_outcomes(passed=0, skipped=0, failed=1)
     result.stdout.fnmatch_lines("""
         *SocketBlockedError: A test tried to use socket.socket.*
     """)
@@ -48,14 +49,12 @@ def test_global_disable_via_fixture(testdir):
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     """)
     result = testdir.runpytest("--verbose")
-    result.assert_outcomes(0, 0, 1)
     assert_socket_blocked(result)
 
 
 def test_global_disable_via_cli_flag(testdir):
     testdir.makepyfile(PYFILE_SOCKET_USED_IN_TEST)
     result = testdir.runpytest("--verbose", "--disable-socket")
-    result.assert_outcomes(0, 0, 1)
     assert_socket_blocked(result)
 
 
@@ -76,7 +75,6 @@ def test_global_disable_via_config(testdir):
         addopts = --disable-socket
     """)
     result = testdir.runpytest("--verbose")
-    result.assert_outcomes(0, 0, 1)
     assert_socket_blocked(result)
 
 
@@ -90,7 +88,6 @@ def test_disable_socket_marker(testdir):
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     """)
     result = testdir.runpytest("--verbose")
-    result.assert_outcomes(0, 0, 1)
     assert_socket_blocked(result)
 
 
@@ -104,7 +101,6 @@ def test_enable_socket_marker(testdir):
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     """)
     result = testdir.runpytest("--verbose", "--disable-socket")
-    result.assert_outcomes(0, 0, 1)
     assert_socket_blocked(result)
 
 
@@ -136,7 +132,6 @@ def test_enabled_urllib_succeeds(testdir):
             assert urlopen('http://httpbin.org/get').getcode() == 200
     """)
     result = testdir.runpytest("--verbose", "--disable-socket")
-    result.assert_outcomes(0, 0, 1)
     assert_socket_blocked(result)
 
 
@@ -153,7 +148,6 @@ def test_disabled_urllib_fails(testdir):
             assert urlopen('http://httpbin.org/get').getcode() == 200
     """)
     result = testdir.runpytest("--verbose")
-    result.assert_outcomes(0, 0, 1)
     assert_socket_blocked(result)
 
 
