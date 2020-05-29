@@ -4,6 +4,14 @@ import pytest
 from pytest_socket import enable_socket
 
 
+PYFILE_SOCKET_USED_IN_TEST = """
+        import socket
+
+        def test_socket():
+            socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    """
+
+
 @pytest.fixture(autouse=True)
 def reenable_socket():
     # The tests can leave the socket disabled in the global scope.
@@ -19,12 +27,7 @@ def assert_socket_blocked(result):
 
 
 def test_socket_enabled_by_default(testdir):
-    testdir.makepyfile("""
-        import socket
-
-        def test_socket():
-            socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    """)
+    testdir.makepyfile(PYFILE_SOCKET_USED_IN_TEST)
     result = testdir.runpytest("--verbose")
     result.assert_outcomes(1, 0, 0)
     with pytest.raises(BaseException):
@@ -50,12 +53,7 @@ def test_global_disable_via_fixture(testdir):
 
 
 def test_global_disable_via_cli_flag(testdir):
-    testdir.makepyfile("""
-        import socket
-
-        def test_socket():
-            socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    """)
+    testdir.makepyfile(PYFILE_SOCKET_USED_IN_TEST)
     result = testdir.runpytest("--verbose", "--disable-socket")
     result.assert_outcomes(0, 0, 1)
     assert_socket_blocked(result)
@@ -72,12 +70,7 @@ def test_help_message(testdir):
 
 
 def test_global_disable_via_config(testdir):
-    testdir.makepyfile("""
-        import socket
-
-        def test_socket():
-            socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    """)
+    testdir.makepyfile(PYFILE_SOCKET_USED_IN_TEST)
     testdir.makeini("""
         [pytest]
         addopts = --disable-socket
