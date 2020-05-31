@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytest-socket"
-version = "0.3.4"
+version = "0.3.5"
 description = "Pytest Plugin to disable socket calls during tests"
 authors = ["Mike Fiedler <miketheman@gmail.com>"]
 license = "MIT"
