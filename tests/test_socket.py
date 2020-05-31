@@ -101,7 +101,9 @@ def test_enable_socket_marker(testdir):
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     """)
     result = testdir.runpytest("--verbose", "--disable-socket")
-    assert_socket_blocked(result)
+    result.assert_outcomes(1, 0, 0)
+    with pytest.raises(BaseException):
+        assert_socket_blocked(result)
 
 
 def test_urllib_succeeds_by_default(testdir):
@@ -116,6 +118,8 @@ def test_urllib_succeeds_by_default(testdir):
     """)
     result = testdir.runpytest("--verbose")
     result.assert_outcomes(1, 0, 0)
+    with pytest.raises(BaseException):
+        assert_socket_blocked(result)
 
 
 def test_enabled_urllib_succeeds(testdir):
@@ -132,7 +136,9 @@ def test_enabled_urllib_succeeds(testdir):
             assert urlopen('http://httpbin.org/get').getcode() == 200
     """)
     result = testdir.runpytest("--verbose", "--disable-socket")
-    assert_socket_blocked(result)
+    result.assert_outcomes(1, 0, 0)
+    with pytest.raises(BaseException):
+        assert_socket_blocked(result)
 
 
 def test_disabled_urllib_fails(testdir):
