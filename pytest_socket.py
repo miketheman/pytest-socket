@@ -74,10 +74,12 @@ def disable_socket():
     """ disable socket.socket to disable the Internet. useful in testing.
     """
 
-    def guarded(*args, **kwargs):
-        raise SocketBlockedError()
+    class GuardedSocket(socket.socket):
+        """ socket guard to disable socket creation (from pytest-socket) """
+        def __new__(cls, *args, **kwargs):
+            raise SocketBlockedError()
 
-    socket.socket = guarded
+    socket.socket = GuardedSocket
 
 
 def enable_socket():
