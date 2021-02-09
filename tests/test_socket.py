@@ -210,3 +210,21 @@ def test_mix_and_match(testdir, socket_enabled):
     """)
     result = testdir.runpytest("--verbose", "--disable-socket")
     result.assert_outcomes(1, 0, 2)
+
+
+def test_socket_subclass_is_still_blocked(testdir):
+    testdir.makepyfile("""
+        import pytest
+        import pytest_socket
+        import socket
+
+        @pytest.mark.disable_socket
+        def test_subclass_is_still_blocked():
+
+            class MySocket(socket.socket):
+                pass
+
+            MySocket(socket.AF_INET, socket.SOCK_STREAM)
+    """)
+    result = testdir.runpytest("--verbose")
+    assert_socket_blocked(result)
