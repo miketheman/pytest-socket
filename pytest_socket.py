@@ -77,7 +77,9 @@ def disable_socket():
     class GuardedSocket(socket.socket):
         """ socket guard to disable socket creation (from pytest-socket) """
         def __new__(cls, *args, **kwargs):
-            raise SocketBlockedError()
+            if args[0] != socket.AddressFamily.AF_UNIX:
+                raise SocketBlockedError()
+            return super().__new__(cls, *args, **kwargs)
 
     socket.socket = GuardedSocket
 
