@@ -34,6 +34,12 @@ def pytest_addoption(parser):
         metavar='ALLOWED_HOSTS_CSV',
         help='Only allow specified hosts through socket.socket.connect((host, port)).'
     )
+    group.addoption(
+        '--allow-unix-socket',
+        action='store_true',
+        dest='allow_unix_socket',
+        help='Allow calls if they are to Unix domain sockets'
+    )
 
 
 @pytest.fixture(autouse=True)
@@ -55,31 +61,40 @@ def _socket_marker(request):
 
 
 @pytest.fixture
-def socket_disabled():
+def socket_disabled(pytestconfig):
     """ disable socket.socket for duration of this test function """
-    disable_socket()
+    allow_unix_socket = pytestconfig.getoption('--allow-unix-socket')
+    disable_socket(allow_unix_socket)
     yield
     enable_socket()
 
 
 @pytest.fixture
-def socket_enabled():
+def socket_enabled(pytestconfig):
     """ enable socket.socket for duration of this test function """
     enable_socket()
     yield
-    disable_socket()
+    allow_unix_socket = pytestconfig.getoption('--allow-unix-socket')
+    disable_socket(allow_unix_socket)
 
 
-def disable_socket():
+def disable_socket(allow_unix_socket=False):
     """ disable socket.socket to disable the Internet. useful in testing.
     """
 
     class GuardedSocket(socket.socket):
         """ socket guard to disable socket creation (from pytest-socket) """
         def __new__(cls, *args, **kwargs):
-            if args[0] != socket.AddressFamily.AF_UNIX:
-                raise SocketBlockedError()
-            return super().__new__(cls, *args, **kwargs)
+            try:
+                is_unix_socket = args[0] == socket.AF_UNIX
+            except AttributeError:
+                # AF_UNIX not supported on Windows https://bugs.python.org/issue33408
+                is_unix_socket = False
+
+            if is_unix_socket and allow_unix_socket:
+                return super().__new__(cls, *args, **kwargs)
+
+            raise SocketBlockedError()
 
     socket.socket = GuardedSocket
 
