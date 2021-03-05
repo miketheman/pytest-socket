@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
+import socket
 
 from pytest_socket import enable_socket
 
@@ -228,3 +229,29 @@ def test_socket_subclass_is_still_blocked(testdir):
     """)
     result = testdir.runpytest("--verbose")
     assert_socket_blocked(result)
+
+
+@pytest.mark.skipif(not hasattr(socket, "AF_UNIX"), reason="Skip any platform that does not support AF_UNIX")
+def test_unix_domain_sockets_blocked_with_disable_socket(testdir):
+    testdir.makepyfile("""
+        import socket
+
+        def test_unix_socket():
+            socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    """)
+    result = testdir.runpytest("--verbose", "--disable-socket")
+    assert_socket_blocked(result)
+
+
+@pytest.mark.skipif(not hasattr(socket, "AF_UNIX"), reason="Skip any platform that does not support AF_UNIX")
+def test_enabling_unix_domain_sockets_with_disable_socket(testdir):
+    testdir.makepyfile("""
+        import socket
+
+        def test_inet():
+            socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        def test_unix_socket():
+            socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    """)
+    result = testdir.runpytest("--verbose", "--disable-socket", "--allow-unix-socket")
+    result.assert_outcomes(passed=1, skipped=0, failed=1)
