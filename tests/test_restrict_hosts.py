@@ -56,10 +56,11 @@ def assert_connect(httpbin, testdir):
         code_template = kwargs.get('code_template', connect_code_template)
         mark_arg = kwargs.get('mark_arg', None)
 
-        if mark_arg and isinstance(mark_arg, str):
-            mark = '@pytest.mark.allow_hosts("{0}")'.format(mark_arg)
-        elif mark_arg and isinstance(mark_arg, list):
-            mark = '@pytest.mark.allow_hosts(["{0}"])'.format('","'.join(mark_arg))
+        if mark_arg:
+            if isinstance(mark_arg, str):
+                mark = '@pytest.mark.allow_hosts("{0}")'.format(mark_arg)
+            elif isinstance(mark_arg, list):
+                mark = '@pytest.mark.allow_hosts(["{0}"])'.format('","'.join(mark_arg))
         code = code_template.format(test_url.hostname, test_url.port, test_name, mark)
         testdir.makepyfile(code)
 
