@@ -4,6 +4,16 @@ This document records all notable changes to
 [pytest-socket](https://pypi.python.org/pypi/pytest-socket). This
 project attempts to adhere to [Semantic Versioning](http://semver.org/).
 
+## [0.4.0][] (2021-03-30)
+
+Enhancements:
+
+- Enable Unix sockets selectively with `--allow-unix-socket` #54
+- Test refactor, add CodeQL scanning
+- Correctly subclass socket.socket #50
+- Add testing against Python 3.9, Dropped testing against Python 3.5
+- Doc updates
+
 ## [0.3.5][] (2020-05-31)
 
 Bugfix release.
@@ -63,3 +73,4 @@ Maintenance release.
 [0.3.3]: https://github.com/miketheman/pytest-socket/compare/0.3.2...0.3.3
 [0.3.4]: https://github.com/miketheman/pytest-socket/compare/0.3.3...0.3.4
 [0.3.5]: https://github.com/miketheman/pytest-socket/compare/0.3.4...0.3.5
+[0.4.0]: https://github.com/miketheman/pytest-socket/compare/0.3.5...0.4.0
