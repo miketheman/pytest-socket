@@ -99,6 +99,21 @@ or for whole test run
     [pytest]
     addopts = --allow-hosts=127.0.0.1,127.0.1.1
 
+Frequently Asked Questions
+==========================
+
+Q: Why is network access disabled in some of my tests but not others?
+
+A: pytest's default fixture scope is "function", which ``socket_enabled`` uses.
+If you create another fixture that creates a socket usage that has a "higher"
+instantiation order, such as at the module/class/session, then the higher
+fixture will be resolved first, and won't be disabled during the tests.
+Read more in `this excellent example
+<https://github.com/miketheman/pytest-socket/issues/45#issue-679835420>`_ and
+more about `pytest fixture order here <https://docs.pytest.org/en/stable/fixture.html#fixture-instantiation-order>`_.
+
+This behavior may change in the future, as we learn more about pytest fixture
+order, and what users expect to happen.
 
 Contributing
 ------------
