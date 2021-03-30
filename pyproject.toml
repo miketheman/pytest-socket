@@ -35,6 +35,8 @@ pytest = "^6.0"
 pytest-cov = "^2.8.1"
 pytest-httpbin = "^1.0"
 pytest-flake8 = "^1.0.4"
+asynctest = "^0.13.0"
+starlette = "^0.14.2"
 
 [tool.poetry.plugins.pytest11]
 socket = 'pytest_socket'
