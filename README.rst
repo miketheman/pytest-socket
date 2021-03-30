@@ -71,6 +71,12 @@ Usage
     def pytest_runtest_setup():
         disable_socket()
 
+* To enable Unix sockets during the test run (e.g. for async), add this option:
+
+.. code:: ini
+
+  [pytest]
+  addopts = --disable-socket --allow-unix-socket
 
 * To enable specific tests use of ``socket``, pass in the fixture to the test or use a marker:
 
