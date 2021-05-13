@@ -4,6 +4,8 @@ import pytest
 
 _true_socket = socket.socket
 _true_connect = socket.socket.connect
+_true_getaddrinfo = socket.getaddrinfo
+_true_gethostbyname = socket.gethostbyname
 
 
 class SocketBlockedError(RuntimeError):
@@ -97,12 +99,16 @@ def disable_socket(allow_unix_socket=False):
             raise SocketBlockedError()
 
     socket.socket = GuardedSocket
+    socket.getaddrinfo = GuardedSocket
+    socket.gethostbyname = GuardedSocket
 
 
 def enable_socket():
     """ re-enable socket.socket to enable the Internet. useful in testing.
     """
     socket.socket = _true_socket
+    socket.getaddrinfo = _true_getaddrinfo
+    socket.gethostbyname = _true_gethostbyname
 
 
 def pytest_configure(config):
