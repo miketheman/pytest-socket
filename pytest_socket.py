@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import socket
 import pytest
+from multiprocessing.connection import address_type
+
 
 _true_socket = socket.socket
 _true_connect = socket.socket.connect
@@ -112,14 +114,19 @@ def pytest_configure(config):
 
 
 def pytest_runtest_setup(item):
-    mark_restrictions = item.get_closest_marker('allow_hosts')
-    cli_restrictions = item.config.getoption('--allow-hosts')
+    host_mark_restrictions = item.get_closest_marker('allow_hosts')
+    host_cli_restrictions = item.config.getoption('--allow-hosts')
     hosts = None
-    if mark_restrictions:
-        hosts = mark_restrictions.args[0]
-    elif cli_restrictions:
-        hosts = cli_restrictions
-    socket_allow_hosts(hosts)
+    if host_mark_restrictions:
+        hosts = host_mark_restrictions.args[0]
+    elif host_cli_restrictions:
+        hosts = host_cli_restrictions
+
+    allow_unix_socket = False
+    if item.get_closest_marker('allow_unix_socket') or item.config.getoption('--allow-unix-socket'):
+        allow_unix_socket = True
+
+    socket_allow_hosts(allowed=hosts, allow_unix_socket=allow_unix_socket)
 
 
 def pytest_runtest_teardown():
@@ -132,14 +139,14 @@ def host_from_address(address):
         return host
 
 
-def host_from_connect_args(args):
-    address = args[0]
-
-    if isinstance(address, tuple):
+def host_from_address_and_family(address, family):
+    if family == "AF_INET":
         return host_from_address(address)
+    elif family == "AF_UNIX":
+        return address
 
 
-def socket_allow_hosts(allowed=None):
+def socket_allow_hosts(allowed=None, allow_unix_socket=False):
     """ disable socket.socket.connect() to disable the Internet. useful in testing.
     """
     if isinstance(allowed, str):
@@ -148,8 +155,10 @@ def socket_allow_hosts(allowed=None):
         return
 
     def guarded_connect(inst, *args):
-        host = host_from_connect_args(args)
-        if host and host in allowed:
+        address = args[0]
+        family = address_type(address)
+        host = host_from_address_and_family(address, family)
+        if (host and host in allowed) or (family == "AF_UNIX" and allow_unix_socket):
             return _true_connect(inst, *args)
         raise SocketConnectBlockedError(allowed, host)
 
