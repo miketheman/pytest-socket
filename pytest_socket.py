@@ -114,13 +114,13 @@ def pytest_configure(config):
 
 
 def pytest_runtest_setup(item):
-    host_mark_restrictions = item.get_closest_marker('allow_hosts')
-    host_cli_restrictions = item.config.getoption('--allow-hosts')
+    mark_restrictions = item.get_closest_marker('allow_hosts')
+    cli_restrictions = item.config.getoption('--allow-hosts')
     hosts = None
-    if host_mark_restrictions:
-        hosts = host_mark_restrictions.args[0]
-    elif host_cli_restrictions:
-        hosts = host_cli_restrictions
+    if mark_restrictions:
+        hosts = mark_restrictions.args[0]
+    elif cli_restrictions:
+        hosts = cli_restrictions
 
     allow_unix_socket = False
     if item.get_closest_marker('allow_unix_socket') or item.config.getoption('--allow-unix-socket'):
