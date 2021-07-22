@@ -10,6 +10,7 @@ repository = "https://github.com/miketheman/pytest-socket"
 include = [
     "LICENSE",
     "README.md",
+    { path = "tests", format = "sdist" },
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
