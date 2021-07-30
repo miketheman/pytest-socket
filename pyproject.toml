@@ -11,6 +11,8 @@ include = [
     "LICENSE",
     "README.md",
     { path = "tests", format = "sdist" },
+    { path = "pytest.ini", format = "sdist" },
+    { path = ".coveragerc", format = "sdist" },
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
