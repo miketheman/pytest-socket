@@ -1,3 +1,4 @@
+import ipaddress
 import socket
 
 import pytest
@@ -177,11 +178,16 @@ def socket_allow_hosts(allowed=None, allow_unix_socket=False):
     if not isinstance(allowed, list):
         return
 
+    cidrs = parse_cidrs_from_allowed(allowed)
+
     def guarded_connect(inst, *args):
         host = host_from_connect_args(args)
         if host in allowed or (_is_unix_socket(inst.family) and allow_unix_socket):
             return _true_connect(inst, *args)
-
+        elif host and len(cidrs) > 0:
+            for cidr in cidrs:
+                if address_in_network(host, cidr):
+                    return _true_connect(inst, *args)
         raise SocketConnectBlockedError(allowed, host)
 
     socket.socket.connect = guarded_connect
@@ -190,4 +196,24 @@ def socket_allow_hosts(allowed=None, allow_unix_socket=False):
 def _remove_restrictions():
     """restore socket.socket.* to allow access to the Internet. useful in testing."""
     socket.socket = _true_socket
+
+
+def is_valid_cidr(network):
+    try:
+        ipaddress.ip_network(network)
+    except ValueError:
+        return False
+    return True
+
+
+def parse_cidrs_from_allowed(allowed):
+    return [x for x in allowed if is_valid_cidr(x)]
+
+
+def address_in_network(ip, net):
+    return ipaddress.ip_address(ip) in ipaddress.ip_network(net)
+
+
+def remove_host_restrictions():
+    """restore socket.socket.connect() to allow access to the Internet. useful in testing."""
     socket.socket.connect = _true_connect
