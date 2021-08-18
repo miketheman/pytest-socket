@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import socket
+import ipaddress
 import pytest
 
 _true_socket = socket.socket
@@ -147,13 +148,35 @@ def socket_allow_hosts(allowed=None):
     if not isinstance(allowed, list):
         return
 
+    cidrs = parse_cidrs_from_allowed(allowed)
+
     def guarded_connect(inst, *args):
         host = host_from_connect_args(args)
         if host and host in allowed:
             return _true_connect(inst, *args)
+        elif host and len(cidrs) > 0:
+            for cidr in cidrs:
+                if address_in_network(host, cidr):
+                    return _true_connect(inst, *args)
         raise SocketConnectBlockedError(allowed, host)
 
     socket.socket.connect = guarded_connect
+
+
+def is_valid_cidr(network):
+    try:
+        ipaddress.ip_network(network)
+    except ValueError:
+        return False
+    return True
+
+
+def parse_cidrs_from_allowed(allowed):
+    return [x for x in allowed if is_valid_cidr(x)]
+
+
+def address_in_network(ip, net):
+    return ipaddress.ip_address(ip) in ipaddress.ip_network(net)
 
 
 def remove_host_restrictions():
