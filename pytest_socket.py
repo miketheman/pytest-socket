@@ -184,10 +184,8 @@ def socket_allow_hosts(allowed=None, allow_unix_socket=False):
         host = host_from_connect_args(args)
         if host in allowed or (_is_unix_socket(inst.family) and allow_unix_socket):
             return _true_connect(inst, *args)
-        elif host and len(cidrs) > 0:
-            for cidr in cidrs:
-                if address_in_network(host, cidr):
-                    return _true_connect(inst, *args)
+        elif host_in_cidr_block(host, cidrs):
+            return _true_connect(inst, *args)
         raise SocketConnectBlockedError(allowed, host)
 
     socket.socket.connect = guarded_connect
@@ -197,6 +195,13 @@ def _remove_restrictions():
     """restore socket.socket.* to allow access to the Internet. useful in testing."""
     socket.socket = _true_socket
 
+
+def host_in_cidr_block(host, cidrs):
+    if host and len(cidrs) > 0:
+        for cidr in cidrs:
+            if address_in_network(host, cidr):
+                return True
+    return False
 
 def is_valid_cidr(network):
     try:
