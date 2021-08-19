@@ -154,13 +154,19 @@ def socket_allow_hosts(allowed=None):
         host = host_from_connect_args(args)
         if host and host in allowed:
             return _true_connect(inst, *args)
-        elif host and len(cidrs) > 0:
-            for cidr in cidrs:
-                if address_in_network(host, cidr):
-                    return _true_connect(inst, *args)
+        elif host_in_cidr_block(host, cidrs):
+            return _true_connect(inst, *args)
         raise SocketConnectBlockedError(allowed, host)
 
     socket.socket.connect = guarded_connect
+
+
+def host_in_cidr_block(host, cidrs):
+    if host and len(cidrs) > 0:
+        for cidr in cidrs:
+            if address_in_network(host, cidr):
+                return True
+    return False
 
 
 def is_valid_cidr(network):
