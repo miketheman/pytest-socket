@@ -13,6 +13,7 @@ include = [
     { path = "tests", format = "sdist" },
     { path = "pytest.ini", format = "sdist" },
     { path = ".coveragerc", format = "sdist" },
+    { path = ".flake8", format = "sdist" },
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
