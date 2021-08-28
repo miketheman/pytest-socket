@@ -4,6 +4,10 @@ This document records all notable changes to
 [pytest-socket](https://pypi.python.org/pypi/pytest-socket). This
 project attempts to adhere to [Semantic Versioning](http://semver.org/).
 
+## [0.4.1][] (2021-08-29)
+
+- Include tests and configs in source distribution archive #69
+
 ## [0.4.0][] (2021-03-30)
 
 Enhancements:
@@ -74,3 +78,4 @@ Maintenance release.
 [0.3.4]: https://github.com/miketheman/pytest-socket/compare/0.3.3...0.3.4
 [0.3.5]: https://github.com/miketheman/pytest-socket/compare/0.3.4...0.3.5
 [0.4.0]: https://github.com/miketheman/pytest-socket/compare/0.3.5...0.4.0
+[0.4.1]: https://github.com/miketheman/pytest-socket/compare/0.4.0...0.4.1
