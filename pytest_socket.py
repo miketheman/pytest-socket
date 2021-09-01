@@ -86,8 +86,11 @@ def disable_socket(allow_unix_socket=False):
         """ socket guard to disable socket creation (from pytest-socket) """
         def __new__(cls, *args, **kwargs):
             try:
-                is_unix_socket = args[0] == socket.AF_UNIX
-            except (AttributeError, IndexError):
+                if len(args) > 0:
+                    is_unix_socket = args[0] == socket.AF_UNIX
+                else:
+                    is_unix_socket = kwargs.get("family") == socket.AF_UNIX
+            except AttributeError, IndexError):
                 # AF_UNIX not supported on Windows https://bugs.python.org/issue33408
                 is_unix_socket = False
 
