@@ -64,18 +64,22 @@ def _socket_marker(request):
 def socket_disabled(pytestconfig):
     """ disable socket.socket for duration of this test function """
     allow_unix_socket = pytestconfig.getoption('--allow-unix-socket')
+    socket_was_enabled = socket.socket == _true_socket
     disable_socket(allow_unix_socket)
     yield
-    enable_socket()
+    if socket_was_enabled:
+        enable_socket()
 
 
 @pytest.fixture
 def socket_enabled(pytestconfig):
     """ enable socket.socket for duration of this test function """
+    socket_was_disabled = socket.socket != _true_socket
     enable_socket()
     yield
     allow_unix_socket = pytestconfig.getoption('--allow-unix-socket')
-    disable_socket(allow_unix_socket)
+    if socket_was_disabled:
+        disable_socket(allow_unix_socket)
 
 
 def disable_socket(allow_unix_socket=False):
