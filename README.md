@@ -41,14 +41,21 @@ Run `pytest --disable-socket`, tests should fail on any access to `socket` or
 libraries using socket with a `SocketBlockedError`.
 
 To add this flag as the default behavior, add this section to your
-`pytest.ini` or `setup.cfg`:
+[`pytest.ini`](https://docs.pytest.org/en/6.2.x/customize.html#pytest-ini):
 
 ```ini
 [pytest]
 addopts = --disable-socket
 ```
 
-or update your `conftest.py` to include:
+or add this to your [`setup.cfg`](https://docs.pytest.org/en/6.2.x/customize.html#setup-cfg):
+
+```ini
+[tool:pytest]
+addopts = --disable-socket
+```
+
+or update your [`conftest.py`](https://docs.pytest.org/en/6.2.x/writing_plugins.html#conftest-py-plugins) to include:
 
 ```python
 from pytest_socket import disable_socket
