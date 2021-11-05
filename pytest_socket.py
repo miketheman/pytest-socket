@@ -139,17 +139,51 @@ def host_from_connect_args(args):
         return host_from_address(address)
 
 
+def is_ipaddress(address: str):
+    """
+    Determine if the address is a valid IPv4 address.
+    """
+    try:
+        socket.inet_aton(address)
+        return True
+    except socket.error:
+        return False
+
+
+def resolve_hostname(hostname):
+    try:
+        return socket.gethostbyname(hostname)
+    except socket.gaierror:
+        return None
+
+
+def treat_allowed(allowed):
+    allowed_hosts = []
+    for allow in allowed:
+        allow = allow.strip()
+        if is_ipaddress(allow):
+            allowed_hosts.append(allow)
+
+        resolved = resolve_hostname(allow)
+        if resolved:
+            allowed_hosts.append(resolved)
+    return allowed_hosts
+
+
 def socket_allow_hosts(allowed=None):
     """ disable socket.socket.connect() to disable the Internet. useful in testing.
     """
     if isinstance(allowed, str):
         allowed = allowed.split(',')
+
     if not isinstance(allowed, list):
         return
 
+    allowed_hosts = treat_allowed(allowed)
+
     def guarded_connect(inst, *args):
         host = host_from_connect_args(args)
-        if host and host in allowed:
+        if host and host in allowed_hosts:
             return _true_connect(inst, *args)
         raise SocketConnectBlockedError(allowed, host)
 
