@@ -197,10 +197,11 @@ def _remove_restrictions():
 
 
 def host_in_cidr_block(host, cidrs):
-    if host and len(cidrs) > 0:
-        for cidr in cidrs:
-            if address_in_network(host, cidr):
-                return True
+    if not host or len(cidrs) == 0:
+        return False
+    for cidr in cidrs:
+        if address_in_network(host, cidr):
+            return True
     return False
 
 def is_valid_cidr(network):
