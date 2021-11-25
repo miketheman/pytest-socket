@@ -31,7 +31,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.6.2"
 pytest = ">=3.6.3"
 
 [tool.poetry.dev-dependencies]
@@ -42,6 +42,7 @@ pytest-flake8 = "^1.0.4"
 asynctest = "^0.13.0"
 requests = "^2.26.0"
 starlette = "^0.14.2"
+httpx = "^0.21.1"
 
 [tool.poetry.plugins.pytest11]
 socket = 'pytest_socket'
