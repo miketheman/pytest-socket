@@ -12,6 +12,7 @@ unix_sockets_only = pytest.mark.skipif(
 @unix_sockets_only
 def test_asynctest(testdir):
     testdir.makepyfile("""
+        import socket
         import asynctest
 
 
