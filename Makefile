@@ -2,6 +2,7 @@
 
 INSTALL_STAMP := .install.stamp
 POETRY := $(shell command -v poetry 2> /dev/null)
+PYTEST_FLAGS :=
 
 all: test
 
@@ -19,7 +20,7 @@ endif
 	@touch $(INSTALL_STAMP)
 
 test: $(INSTALL_STAMP)
-	@poetry run pytest
+	@poetry run pytest $(PYTEST_FLAGS)
 
 dist: clean $(INSTALL_STAMP)
 	@poetry build
