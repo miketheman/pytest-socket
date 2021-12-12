@@ -2,8 +2,6 @@
 import pytest
 import socket
 
-from pytest_socket import enable_socket
-
 
 PYFILE_SOCKET_USED_IN_TEST = """
         import socket
@@ -11,14 +9,6 @@ PYFILE_SOCKET_USED_IN_TEST = """
         def test_socket():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     """
-
-
-@pytest.fixture(autouse=True)
-def reenable_socket():
-    # The tests can leave the socket disabled in the global scope.
-    # Fix that by automatically re-enabling it after each test
-    yield
-    enable_socket()
 
 
 def assert_socket_blocked(result):
