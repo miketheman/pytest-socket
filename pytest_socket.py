@@ -51,7 +51,7 @@ def _socket_marker(request):
     The expected behavior is that higher granularity options should override
     lower granularity options.
     """
-    if request.config.getoption('--disable-socket'):
+    if request.config.__socket_disabled:
         request.getfixturevalue('socket_disabled')
 
     if request.node.get_closest_marker('disable_socket'):
@@ -63,8 +63,7 @@ def _socket_marker(request):
 @pytest.fixture
 def socket_disabled(pytestconfig):
     """ disable socket.socket for duration of this test function """
-    allow_unix_socket = pytestconfig.getoption('--allow-unix-socket')
-    disable_socket(allow_unix_socket)
+    disable_socket(allow_unix_socket=pytestconfig.__socket_allow_unix_socket)
     yield
     enable_socket()
 
@@ -74,8 +73,7 @@ def socket_enabled(pytestconfig):
     """ enable socket.socket for duration of this test function """
     enable_socket()
     yield
-    allow_unix_socket = pytestconfig.getoption('--allow-unix-socket')
-    disable_socket(allow_unix_socket)
+    disable_socket(allow_unix_socket=pytestconfig.__socket_allow_unix_socket)
 
 
 def disable_socket(allow_unix_socket=False):
@@ -110,10 +108,15 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "enable_socket(): Enable socket connections for a specific test")
     config.addinivalue_line("markers", "allow_hosts([hosts]): Restrict socket connection to defined list of hosts")
 
+    # Store the global configs in the `pytest.Config` object.
+    config.__socket_disabled = config.getoption('--disable-socket')
+    config.__socket_allow_unix_socket = config.getoption('--allow-unix-socket')
+    config.__socket_allow_hosts = config.getoption('--allow-hosts')
+
 
 def pytest_runtest_setup(item):
     mark_restrictions = item.get_closest_marker('allow_hosts')
-    cli_restrictions = item.config.getoption('--allow-hosts')
+    cli_restrictions = item.config.__socket_allow_hosts
     hosts = None
     if mark_restrictions:
         hosts = mark_restrictions.args[0]
