@@ -42,24 +42,6 @@ def pytest_addoption(parser):
     )
 
 
-@pytest.fixture(autouse=True)
-def _socket_marker(request):
-    """
-    Create an automatically-used fixture that every test function will load.
-
-    The last option to set the fixture wins priority.
-    The expected behavior is that higher granularity options should override
-    lower granularity options.
-    """
-    if request.config.__socket_disabled:
-        request.getfixturevalue('socket_disabled')
-
-    if request.node.get_closest_marker('disable_socket'):
-        request.getfixturevalue('socket_disabled')
-    if request.node.get_closest_marker('enable_socket'):
-        request.getfixturevalue('socket_enabled')
-
-
 @pytest.fixture
 def socket_disabled(pytestconfig):
     """ disable socket.socket for duration of this test function """
@@ -113,6 +95,16 @@ def pytest_configure(config):
 
 
 def pytest_runtest_setup(item):
+    """During each test item's setup phase,
+    choose the behavior based on the configurations supplied."""
+    if item.config.__socket_disabled:
+        disable_socket(item.config.__socket_allow_unix_socket)
+
+    if item.get_closest_marker('disable_socket'):
+        disable_socket(item.config.__socket_allow_unix_socket)
+    if item.get_closest_marker('enable_socket'):
+        enable_socket()
+
     mark_restrictions = item.get_closest_marker('allow_hosts')
     cli_restrictions = item.config.__socket_allow_hosts
     hosts = None
