@@ -84,15 +84,15 @@ def disable_socket(allow_unix_socket=False):
 
     class GuardedSocket(socket.socket):
         """ socket guard to disable socket creation (from pytest-socket) """
-        def __new__(cls, *args, **kwargs):
+        def __new__(cls, family=-1, type=-1, proto=-1, fileno=None):
             try:
-                is_unix_socket = args[0] == socket.AF_UNIX
-            except (AttributeError, IndexError):
+                is_unix_socket = family == socket.AF_UNIX
+            except AttributeError:
                 # AF_UNIX not supported on Windows https://bugs.python.org/issue33408
                 is_unix_socket = False
 
             if is_unix_socket and allow_unix_socket:
-                return super().__new__(cls, *args, **kwargs)
+                return super().__new__(cls, family, type, proto, fileno)
 
             raise SocketBlockedError()
 
