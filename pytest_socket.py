@@ -65,7 +65,6 @@ def socket_disabled(pytestconfig):
     """ disable socket.socket for duration of this test function """
     disable_socket(allow_unix_socket=pytestconfig.__socket_allow_unix_socket)
     yield
-    enable_socket()
 
 
 @pytest.fixture
@@ -73,7 +72,6 @@ def socket_enabled(pytestconfig):
     """ enable socket.socket for duration of this test function """
     enable_socket()
     yield
-    disable_socket(allow_unix_socket=pytestconfig.__socket_allow_unix_socket)
 
 
 def disable_socket(allow_unix_socket=False):
