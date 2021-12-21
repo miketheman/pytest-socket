@@ -9,6 +9,8 @@ plugins:
     enabled: true
   radon:
     enabled: true
+    config:
+      threshold: "C"
 exclude_patterns:
 - "*.egg-info/"
 - .cache/
