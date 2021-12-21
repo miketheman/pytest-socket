@@ -1,6 +1,5 @@
 """Test module to express precedence tests between the different
 configuration combinations"""
-import pytest
 
 
 def assert_socket_blocked(result, passed=0, skipped=0, failed=1):
@@ -124,22 +123,6 @@ def test_enable_marker_for_test_class(testdir):
         """
     )
     result = testdir.runpytest("--disable-socket")
-    assert_socket_blocked(result, passed=1, failed=1)
-
-
-def test_enable_unix_socket_via_cli_flag(testdir):
-    testdir.makepyfile(
-        """
-        import socket
-
-        def test_unix_socket():
-            socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-
-        def test_socket_disabled():
-            socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        """
-    )
-    result = testdir.runpytest("--disable-socket", "--allow-unix-socket")
     assert_socket_blocked(result, passed=1, failed=1)
 
 
