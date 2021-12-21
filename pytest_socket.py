@@ -124,7 +124,7 @@ def pytest_runtest_setup(item):
 
 
 def pytest_runtest_teardown():
-    remove_host_restrictions()
+    _remove_restrictions()
 
 
 def host_from_address(address):
@@ -157,7 +157,8 @@ def socket_allow_hosts(allowed=None):
     socket.socket.connect = guarded_connect
 
 
-def remove_host_restrictions():
-    """ restore socket.socket.connect() to allow access to the Internet. useful in testing.
+def _remove_restrictions():
+    """ restore socket.socket.* to allow access to the Internet. useful in testing.
     """
+    socket.socket = _true_socket
     socket.socket.connect = _true_connect
