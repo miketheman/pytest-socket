@@ -94,17 +94,26 @@ def pytest_configure(config):
     config.__socket_allow_hosts = config.getoption('--allow-hosts')
 
 
-def pytest_runtest_setup(item):
+def pytest_runtest_setup(item) -> None:
     """During each test item's setup phase,
-    choose the behavior based on the configurations supplied."""
-    if item.config.__socket_disabled:
-        disable_socket(item.config.__socket_allow_unix_socket)
+    choose the behavior based on the configurations supplied.
 
-    if item.get_closest_marker('disable_socket'):
-        disable_socket(item.config.__socket_allow_unix_socket)
-    if item.get_closest_marker('enable_socket'):
+    This is the bulk of the logic for the plugin.
+    As the logic can be extensive, this method is allowed complexity.
+    It may be refactored in the future to be more readable.
+    """
+
+    # If test has the `enable_socket` marker, we accept this as most explicit.
+    if 'socket_enabled' in item.fixturenames or item.get_closest_marker('enable_socket'):
         enable_socket()
+        return
 
+    # If the test has the `disable_socket` marker, it's explicitly disabled.
+    if 'socket_disabled' in item.fixturenames or item.get_closest_marker('disable_socket'):
+        disable_socket(item.config.__socket_allow_unix_socket)
+        return
+
+    # Resolve `allow_hosts` behaviors.
     mark_restrictions = item.get_closest_marker('allow_hosts')
     cli_restrictions = item.config.__socket_allow_hosts
     hosts = None
@@ -113,6 +122,10 @@ def pytest_runtest_setup(item):
     elif cli_restrictions:
         hosts = cli_restrictions
     socket_allow_hosts(hosts)
+
+    # Finally, check the global config and disable socket if needed.
+    if item.config.__socket_disabled and not hosts:
+        disable_socket(item.config.__socket_allow_unix_socket)
 
 
 def pytest_runtest_teardown():
