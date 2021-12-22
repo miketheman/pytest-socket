@@ -42,24 +42,6 @@ def pytest_addoption(parser):
     )
 
 
-@pytest.fixture(autouse=True)
-def _socket_marker(request):
-    """
-    Create an automatically-used fixture that every test function will load.
-
-    The last option to set the fixture wins priority.
-    The expected behavior is that higher granularity options should override
-    lower granularity options.
-    """
-    if request.config.__socket_disabled:
-        request.getfixturevalue('socket_disabled')
-
-    if request.node.get_closest_marker('disable_socket'):
-        request.getfixturevalue('socket_disabled')
-    if request.node.get_closest_marker('enable_socket'):
-        request.getfixturevalue('socket_enabled')
-
-
 @pytest.fixture
 def socket_disabled(pytestconfig):
     """ disable socket.socket for duration of this test function """
@@ -112,7 +94,35 @@ def pytest_configure(config):
     config.__socket_allow_hosts = config.getoption('--allow-hosts')
 
 
-def pytest_runtest_setup(item):
+def pytest_runtest_setup(item) -> None:
+    """During each test item's setup phase,
+    choose the behavior based on the configurations supplied.
+
+    This is the bulk of the logic for the plugin.
+    As the logic can be extensive, this method is allowed complexity.
+    It may be refactored in the future to be more readable.
+    """
+
+    # If test has the `enable_socket` marker, we accept this as most explicit.
+    if 'socket_enabled' in item.fixturenames or item.get_closest_marker('enable_socket'):
+        enable_socket()
+        return
+
+    # If the test has the `disable_socket` marker, it's explicitly disabled.
+    if 'socket_disabled' in item.fixturenames or item.get_closest_marker('disable_socket'):
+        disable_socket(item.config.__socket_allow_unix_socket)
+        return
+
+    # Resolve `allow_hosts` behaviors.
+    hosts = _resolve_allow_hosts(item)
+
+    # Finally, check the global config and disable socket if needed.
+    if item.config.__socket_disabled and not hosts:
+        disable_socket(item.config.__socket_allow_unix_socket)
+
+
+def _resolve_allow_hosts(item):
+    """Resolve `allow_hosts` behaviors."""
     mark_restrictions = item.get_closest_marker('allow_hosts')
     cli_restrictions = item.config.__socket_allow_hosts
     hosts = None
@@ -121,6 +131,7 @@ def pytest_runtest_setup(item):
     elif cli_restrictions:
         hosts = cli_restrictions
     socket_allow_hosts(hosts)
+    return hosts
 
 
 def pytest_runtest_teardown():
