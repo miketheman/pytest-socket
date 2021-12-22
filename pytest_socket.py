@@ -114,6 +114,15 @@ def pytest_runtest_setup(item) -> None:
         return
 
     # Resolve `allow_hosts` behaviors.
+    hosts = _resolve_allow_hosts(item)
+
+    # Finally, check the global config and disable socket if needed.
+    if item.config.__socket_disabled and not hosts:
+        disable_socket(item.config.__socket_allow_unix_socket)
+
+
+def _resolve_allow_hosts(item):
+    """Resolve `allow_hosts` behaviors."""
     mark_restrictions = item.get_closest_marker('allow_hosts')
     cli_restrictions = item.config.__socket_allow_hosts
     hosts = None
@@ -122,10 +131,7 @@ def pytest_runtest_setup(item) -> None:
     elif cli_restrictions:
         hosts = cli_restrictions
     socket_allow_hosts(hosts)
-
-    # Finally, check the global config and disable socket if needed.
-    if item.config.__socket_disabled and not hosts:
-        disable_socket(item.config.__socket_allow_unix_socket)
+    return hosts
 
 
 def pytest_runtest_teardown():
