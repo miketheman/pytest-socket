@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import socket
+
 import pytest
 
 _true_socket = socket.socket

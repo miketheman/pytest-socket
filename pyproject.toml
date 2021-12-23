@@ -50,6 +50,9 @@ socket = 'pytest_socket'
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/miketheman/pytest-socket/issues"
 
+[tool.isort]
+known_first_party = ['pytest_socket', 'conftest', 'test_socket']
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"

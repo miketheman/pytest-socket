@@ -2,7 +2,6 @@ import socket
 
 import pytest
 
-
 pytest_plugins = 'pytester'
 
 
