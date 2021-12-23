@@ -44,7 +44,7 @@ def assert_socket_blocked(result):
 )
 def test_socket_enabled_by_default(testdir, pyfile):
     testdir.makepyfile(pyfile)
-    result = testdir.runpytest("--verbose")
+    result = testdir.runpytest()
     result.assert_outcomes(1, 0, 0)
     with pytest.raises(BaseException):
         assert_socket_blocked(result)
@@ -63,7 +63,7 @@ def test_global_disable_via_fixture(testdir):
         def test_socket():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     """)
-    result = testdir.runpytest("--verbose")
+    result = testdir.runpytest()
     assert_socket_blocked(result)
 
 
@@ -77,7 +77,7 @@ def test_global_disable_via_fixture(testdir):
 )
 def test_global_disable_via_cli_flag(testdir, pyfile):
     testdir.makepyfile(pyfile)
-    result = testdir.runpytest("--verbose", "--disable-socket")
+    result = testdir.runpytest("--disable-socket")
     assert_socket_blocked(result)
 
 
@@ -105,7 +105,7 @@ def test_global_disable_via_config(testdir, pyfile):
         [pytest]
         addopts = --disable-socket
     """)
-    result = testdir.runpytest("--verbose")
+    result = testdir.runpytest()
     assert_socket_blocked(result)
 
 
@@ -118,7 +118,7 @@ def test_disable_socket_marker(testdir):
         def test_socket():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     """)
-    result = testdir.runpytest("--verbose")
+    result = testdir.runpytest()
     assert_socket_blocked(result)
 
 
@@ -131,7 +131,7 @@ def test_enable_socket_marker(testdir):
         def test_socket():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     """)
-    result = testdir.runpytest("--verbose", "--disable-socket")
+    result = testdir.runpytest("--disable-socket")
     result.assert_outcomes(1, 0, 0)
     with pytest.raises(BaseException):
         assert_socket_blocked(result)
@@ -147,7 +147,7 @@ def test_urllib_succeeds_by_default(testdir):
         def test_disable_socket_urllib():
             assert urlopen('http://httpbin.org/get').getcode() == 200
     """)
-    result = testdir.runpytest("--verbose")
+    result = testdir.runpytest()
     result.assert_outcomes(1, 0, 0)
     with pytest.raises(BaseException):
         assert_socket_blocked(result)
@@ -166,7 +166,7 @@ def test_enabled_urllib_succeeds(testdir):
         def test_disable_socket_urllib():
             assert urlopen('http://httpbin.org/get').getcode() == 200
     """)
-    result = testdir.runpytest("--verbose", "--disable-socket")
+    result = testdir.runpytest("--disable-socket")
     result.assert_outcomes(1, 0, 0)
     with pytest.raises(BaseException):
         assert_socket_blocked(result)
@@ -184,7 +184,7 @@ def test_disabled_urllib_fails(testdir):
         def test_disable_socket_urllib():
             assert urlopen('http://httpbin.org/get').getcode() == 200
     """)
-    result = testdir.runpytest("--verbose")
+    result = testdir.runpytest()
     assert_socket_blocked(result)
 
 
@@ -210,7 +210,7 @@ def test_double_call_does_nothing(testdir):
             pytest_socket.enable_socket()
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     """)
-    result = testdir.runpytest("--verbose")
+    result = testdir.runpytest()
     result.assert_outcomes(3, 0, 0)
     with pytest.raises(BaseException):
         assert_socket_blocked(result)
@@ -222,7 +222,7 @@ def test_socket_enabled_fixture(testdir, socket_enabled):
         def test_socket_enabled(socket_enabled):
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     """)
-    result = testdir.runpytest("--verbose")
+    result = testdir.runpytest()
     result.assert_outcomes(1, 0, 0)
     with pytest.raises(BaseException):
         assert_socket_blocked(result)
@@ -239,7 +239,7 @@ def test_mix_and_match(testdir, socket_enabled):
         def test_socket2():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     """)
-    result = testdir.runpytest("--verbose", "--disable-socket")
+    result = testdir.runpytest("--disable-socket")
     result.assert_outcomes(1, 0, 2)
 
 
@@ -257,7 +257,7 @@ def test_socket_subclass_is_still_blocked(testdir):
 
             MySocket(socket.AF_INET, socket.SOCK_STREAM)
     """)
-    result = testdir.runpytest("--verbose")
+    result = testdir.runpytest()
     assert_socket_blocked(result)
 
 
@@ -269,7 +269,7 @@ def test_unix_domain_sockets_blocked_with_disable_socket(testdir):
         def test_unix_socket():
             socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     """)
-    result = testdir.runpytest("--verbose", "--disable-socket")
+    result = testdir.runpytest("--disable-socket")
     assert_socket_blocked(result)
 
 
@@ -283,5 +283,5 @@ def test_enabling_unix_domain_sockets_with_disable_socket(testdir):
         def test_unix_socket():
             socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     """)
-    result = testdir.runpytest("--verbose", "--disable-socket", "--allow-unix-socket")
+    result = testdir.runpytest("--disable-socket", "--allow-unix-socket")
     result.assert_outcomes(passed=1, skipped=0, failed=1)
