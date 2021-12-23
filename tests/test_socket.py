@@ -3,7 +3,6 @@ import pytest
 
 from conftest import unix_sockets_only
 
-
 PYFILE_SOCKET_USED_IN_TEST_ARGS = """
         import socket
 
