@@ -1,24 +1,28 @@
 .PHONY: all clean poetry test dist testrelease release
 
+INSTALL_STAMP := .install.stamp
 POETRY := $(shell command -v poetry 2> /dev/null)
+PYTEST_FLAGS :=
 
 all: test
 
 clean:
 	@find . -name \*.pyc -delete
 	@find . -name __pycache__ -delete
-	@rm -fr .cache/ .coverage .pytest_cache/ *.egg-info/ dist/ htmlcov/
+	@rm -fr $(INSTALL_STAMP) .cache/ .coverage .pytest_cache/ *.egg-info/ dist/ htmlcov/
 
-poetry.lock pytest_socket.egg-info/ :
+install: $(INSTALL_STAMP)
+$(INSTALL_STAMP): pyproject.toml poetry.lock
 ifndef POETRY
 	$(error "poetry is not available, please install it first.")
 endif
 	@poetry install
+	@touch $(INSTALL_STAMP)
 
-test: pytest_socket.egg-info/
-	@poetry run pytest
+test: $(INSTALL_STAMP)
+	@poetry run pytest $(PYTEST_FLAGS)
 
-dist: clean poetry.lock
+dist: clean $(INSTALL_STAMP)
 	@poetry build
 
 testrelease: dist

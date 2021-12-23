@@ -2,10 +2,8 @@
 import pytest
 import socket
 
-from pytest_socket import enable_socket
 
-
-PYFILE_SOCKET_USED_IN_TEST = """
+PYFILE_SOCKET_USED_IN_TEST_ARGS = """
         import socket
 
         def test_socket():
@@ -14,12 +12,20 @@ PYFILE_SOCKET_USED_IN_TEST = """
     """
 
 
-@pytest.fixture(autouse=True)
-def reenable_socket():
-    # The tests can leave the socket disabled in the global scope.
-    # Fix that by automatically re-enabling it after each test
-    yield
-    enable_socket()
+PYFILE_SOCKET_USED_IN_TEST_KWARGS = """
+        import socket
+
+        def test_socket():
+            socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
+    """
+
+
+PYFILE_SOCKET_NO_ARGS = """
+        import socket
+
+        def test_socket():
+            socket.socket()
+    """
 
 
 def assert_socket_blocked(result):
@@ -29,8 +35,16 @@ def assert_socket_blocked(result):
     """)
 
 
-def test_socket_enabled_by_default(testdir):
-    testdir.makepyfile(PYFILE_SOCKET_USED_IN_TEST)
+@pytest.mark.parametrize(
+    "pyfile",
+    [
+        PYFILE_SOCKET_USED_IN_TEST_ARGS,
+        PYFILE_SOCKET_USED_IN_TEST_KWARGS,
+        PYFILE_SOCKET_NO_ARGS
+    ]
+)
+def test_socket_enabled_by_default(testdir, pyfile):
+    testdir.makepyfile(pyfile)
     result = testdir.runpytest("--verbose")
     result.assert_outcomes(1, 0, 0)
     with pytest.raises(BaseException):
@@ -55,8 +69,16 @@ def test_global_disable_via_fixture(testdir):
     assert_socket_blocked(result)
 
 
-def test_global_disable_via_cli_flag(testdir):
-    testdir.makepyfile(PYFILE_SOCKET_USED_IN_TEST)
+@pytest.mark.parametrize(
+    "pyfile",
+    [
+        PYFILE_SOCKET_USED_IN_TEST_ARGS,
+        PYFILE_SOCKET_USED_IN_TEST_KWARGS,
+        PYFILE_SOCKET_NO_ARGS
+    ]
+)
+def test_global_disable_via_cli_flag(testdir, pyfile):
+    testdir.makepyfile(pyfile)
     result = testdir.runpytest("--verbose", "--disable-socket")
     assert_socket_blocked(result)
 
@@ -71,8 +93,16 @@ def test_help_message(testdir):
     ])
 
 
-def test_global_disable_via_config(testdir):
-    testdir.makepyfile(PYFILE_SOCKET_USED_IN_TEST)
+@pytest.mark.parametrize(
+    "pyfile",
+    [
+        PYFILE_SOCKET_USED_IN_TEST_ARGS,
+        PYFILE_SOCKET_USED_IN_TEST_KWARGS,
+        PYFILE_SOCKET_NO_ARGS
+    ]
+)
+def test_global_disable_via_config(testdir, pyfile):
+    testdir.makepyfile(pyfile)
     testdir.makeini("""
         [pytest]
         addopts = --disable-socket
