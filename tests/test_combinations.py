@@ -45,3 +45,30 @@ def test_parametrize_with_socket_enabled_and_allow_hosts(testdir, httpbin):
     result.stdout.fnmatch_lines(
         "*SocketConnectBlockedError: A test tried to use socket.socket.connect() with host*"
     )
+
+
+def test_combine_unix_and_allow_hosts(testdir, httpbin):
+    """Test combination of disable, allow-unix and allow-hosts.
+
+    From https://github.com/miketheman/pytest-socket/issues/78
+    """
+    testdir.makepyfile(
+        f"""
+        import socket
+
+        import pytest
+
+
+        def test_unix_connect():
+            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            with pytest.raises(FileNotFoundError):
+                sock.connect('/tmp/socket.sock')
+
+
+        def test_inet_connect():
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect(('{httpbin.host}', {httpbin.port}))
+        """
+    )
+    result = testdir.runpytest("--disable-socket", "--allow-unix-socket", f"--allow-hosts={httpbin.host}")
+    result.assert_outcomes(passed=2)

@@ -130,7 +130,7 @@ def _resolve_allow_hosts(item):
         hosts = mark_restrictions.args[0]
     elif cli_restrictions:
         hosts = cli_restrictions
-    socket_allow_hosts(hosts)
+    socket_allow_hosts(hosts, allow_unix_socket=item.config.__socket_allow_unix_socket)
     return hosts
 
 
@@ -151,7 +151,7 @@ def host_from_connect_args(args):
         return host_from_address(address)
 
 
-def socket_allow_hosts(allowed=None):
+def socket_allow_hosts(allowed=None, allow_unix_socket=False):
     """ disable socket.socket.connect() to disable the Internet. useful in testing.
     """
     if isinstance(allowed, str):
@@ -161,8 +161,17 @@ def socket_allow_hosts(allowed=None):
 
     def guarded_connect(inst, *args):
         host = host_from_connect_args(args)
-        if host and host in allowed:
+        if host in allowed:
             return _true_connect(inst, *args)
+
+        try:
+            is_unix_socket = inst.family == socket.AF_UNIX
+        except AttributeError:
+            # AF_UNIX not supported on Windows https://bugs.python.org/issue33408
+            is_unix_socket = False
+        if allow_unix_socket and is_unix_socket:
+            return _true_connect(inst, *args)
+
         raise SocketConnectBlockedError(allowed, host)
 
     socket.socket.connect = guarded_connect
