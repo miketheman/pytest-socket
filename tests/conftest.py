@@ -1,14 +1,12 @@
+import socket
+
 import pytest
-from pytest_socket import enable_socket
+
 
 pytest_plugins = 'pytester'
 
 
-@pytest.fixture(autouse=True)
-def reenable_socket():
-    """
-    The tests can leave the socket disabled in the global scope.
-    Fix by automatically re-enabling it after each test.
-    """
-    yield
-    enable_socket()
+unix_sockets_only = pytest.mark.skipif(
+    not hasattr(socket, "AF_UNIX"),
+    reason="Skip any platform that does not support AF_UNIX",
+)
