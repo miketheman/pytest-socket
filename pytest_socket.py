@@ -17,7 +17,7 @@ class SocketConnectBlockedError(RuntimeError):
         if allowed:
             allowed = ','.join(allowed)
         super(SocketConnectBlockedError, self).__init__(
-            'A test tried to use socket.socket.connect() with host "{0}" (allowed: "{1}").'.format(host, allowed)
+            f'A test tried to use socket.socket.connect() with host "{host}" (allowed: "{allowed}").'
         )
 
 
