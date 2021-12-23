@@ -8,6 +8,7 @@ PYFILE_SOCKET_USED_IN_TEST_ARGS = """
 
         def test_socket():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            socket.gethostbyname("localhost")
     """
 
 
@@ -62,6 +63,7 @@ def test_global_disable_via_fixture(testdir):
 
         def test_socket():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            socket.gethostbyname("localhost")
     """)
     result = testdir.runpytest()
     assert_socket_blocked(result)
@@ -117,6 +119,7 @@ def test_disable_socket_marker(testdir):
         @pytest.mark.disable_socket
         def test_socket():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            socket.gethostbyname("localhost")
     """)
     result = testdir.runpytest()
     assert_socket_blocked(result)
@@ -130,6 +133,7 @@ def test_enable_socket_marker(testdir):
         @pytest.mark.enable_socket
         def test_socket():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            socket.gethostbyname("localhost")
     """)
     result = testdir.runpytest("--disable-socket")
     result.assert_outcomes(1, 0, 0)
@@ -198,17 +202,20 @@ def test_double_call_does_nothing(testdir):
             pytest_socket.enable_socket()
             pytest_socket.enable_socket()
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            socket.gethostbyname("localhost")
 
         def test_double_disabled():
             pytest_socket.disable_socket()
             pytest_socket.disable_socket()
             with pytest.raises(pytest_socket.SocketBlockedError):
                 socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                socket.gethostbyname("localhost")
 
         def test_disable_enable():
             pytest_socket.disable_socket()
             pytest_socket.enable_socket()
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            socket.gethostbyname("localhost")
     """)
     result = testdir.runpytest()
     result.assert_outcomes(3, 0, 0)
@@ -221,6 +228,7 @@ def test_socket_enabled_fixture(testdir, socket_enabled):
         import socket
         def test_socket_enabled(socket_enabled):
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            socket.gethostbyname("localhost")
     """)
     result = testdir.runpytest()
     result.assert_outcomes(1, 0, 0)
@@ -234,10 +242,15 @@ def test_mix_and_match(testdir, socket_enabled):
 
         def test_socket1():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            socket.gethostbyname("localhost")
+
         def test_socket_enabled(socket_enabled):
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            socket.gethostbyname("localhost")
+
         def test_socket2():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            socket.gethostbyname("localhost")
     """)
     result = testdir.runpytest("--disable-socket")
     result.assert_outcomes(1, 0, 2)
