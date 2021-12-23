@@ -56,6 +56,15 @@ def socket_enabled(pytestconfig):
     yield
 
 
+def _is_unix_socket(family) -> bool:
+    try:
+        is_unix_socket = family == socket.AF_UNIX
+    except AttributeError:
+        # AF_UNIX not supported on Windows https://bugs.python.org/issue33408
+        is_unix_socket = False
+    return is_unix_socket
+
+
 def disable_socket(allow_unix_socket=False):
     """ disable socket.socket to disable the Internet. useful in testing.
     """
@@ -63,13 +72,7 @@ def disable_socket(allow_unix_socket=False):
     class GuardedSocket(socket.socket):
         """ socket guard to disable socket creation (from pytest-socket) """
         def __new__(cls, family=-1, type=-1, proto=-1, fileno=None):
-            try:
-                is_unix_socket = family == socket.AF_UNIX
-            except AttributeError:
-                # AF_UNIX not supported on Windows https://bugs.python.org/issue33408
-                is_unix_socket = False
-
-            if is_unix_socket and allow_unix_socket:
+            if _is_unix_socket(family) and allow_unix_socket:
                 return super().__new__(cls, family, type, proto, fileno)
 
             raise SocketBlockedError()
@@ -161,15 +164,7 @@ def socket_allow_hosts(allowed=None, allow_unix_socket=False):
 
     def guarded_connect(inst, *args):
         host = host_from_connect_args(args)
-        if host in allowed:
-            return _true_connect(inst, *args)
-
-        try:
-            is_unix_socket = inst.family == socket.AF_UNIX
-        except AttributeError:
-            # AF_UNIX not supported on Windows https://bugs.python.org/issue33408
-            is_unix_socket = False
-        if allow_unix_socket and is_unix_socket:
+        if host in allowed or (_is_unix_socket(inst.family) and allow_unix_socket):
             return _true_connect(inst, *args)
 
         raise SocketConnectBlockedError(allowed, host)
