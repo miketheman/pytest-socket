@@ -52,6 +52,8 @@ socket = 'pytest_socket'
 
 [tool.isort]
 known_first_party = ['pytest_socket', 'conftest', 'test_socket']
+# https://black.readthedocs.io/en/stable/guides/using_black_with_other_tools.html#profilegcm
+profile = "black"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

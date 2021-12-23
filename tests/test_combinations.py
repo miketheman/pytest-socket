@@ -44,7 +44,8 @@ def test_parametrize_with_socket_enabled_and_allow_hosts(testdir, httpbin):
     result = testdir.runpytest()
     result.assert_outcomes(passed=4, failed=1)
     result.stdout.fnmatch_lines(
-        "*SocketConnectBlockedError: A test tried to use socket.socket.connect() with host*"
+        "*SocketConnectBlockedError: "
+        "A test tried to use socket.socket.connect() with host*"
     )
 
 
@@ -72,5 +73,7 @@ def test_combine_unix_and_allow_hosts(testdir, httpbin):
             sock.connect(('{httpbin.host}', {httpbin.port}))
         """
     )
-    result = testdir.runpytest("--disable-socket", "--allow-unix-socket", f"--allow-hosts={httpbin.host}")
+    result = testdir.runpytest(
+        "--disable-socket", "--allow-unix-socket", f"--allow-hosts={httpbin.host}"
+    )
     result.assert_outcomes(passed=2)
