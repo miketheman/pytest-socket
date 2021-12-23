@@ -8,8 +8,8 @@ readme = "README.md"
 homepage = "https://pypi.org/project/pytest-socket/"
 repository = "https://github.com/miketheman/pytest-socket"
 include = [
-    "LICENSE",
-    "README.md",
+    { path = "LICENSE" },
+    { path = "README.md" },
     { path = "tests", format = "sdist" },
     { path = "pytest.ini", format = "sdist" },
     { path = ".coveragerc", format = "sdist" },
@@ -35,8 +35,8 @@ python = "^3.7"
 pytest = ">=3.6.3"
 
 [tool.poetry.dev-dependencies]
+coverage = "^6.2"
 pytest = "^6.0"
-pytest-cov = "^2.8.1"
 pytest-httpbin = "^1.0"
 pytest-randomly = "^3.5.0"
 asynctest = "^0.13.0"

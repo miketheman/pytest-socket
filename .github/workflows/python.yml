@@ -34,4 +34,4 @@ jobs:
     - name: Prepare project for development
       run: poetry install
     - name: Test with pytest
-      run: poetry run pytest
+      run: poetry run coverage run -m pytest ; coverage report --show-missing
