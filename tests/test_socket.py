@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
-import socket
+
+from conftest import unix_sockets_only
 
 
 PYFILE_SOCKET_USED_IN_TEST_ARGS = """
@@ -261,7 +262,7 @@ def test_socket_subclass_is_still_blocked(testdir):
     assert_socket_blocked(result)
 
 
-@pytest.mark.skipif(not hasattr(socket, "AF_UNIX"), reason="Skip any platform that does not support AF_UNIX")
+@unix_sockets_only
 def test_unix_domain_sockets_blocked_with_disable_socket(testdir):
     testdir.makepyfile("""
         import socket
@@ -273,7 +274,7 @@ def test_unix_domain_sockets_blocked_with_disable_socket(testdir):
     assert_socket_blocked(result)
 
 
-@pytest.mark.skipif(not hasattr(socket, "AF_UNIX"), reason="Skip any platform that does not support AF_UNIX")
+@unix_sockets_only
 def test_enabling_unix_domain_sockets_with_disable_socket(testdir):
     testdir.makepyfile("""
         import socket

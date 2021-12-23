@@ -1,12 +1,5 @@
-import socket
-
-import pytest
+from conftest import unix_sockets_only
 from test_socket import assert_socket_blocked
-
-unix_sockets_only = pytest.mark.skipif(
-    not hasattr(socket, "AF_UNIX"),
-    reason="Skip any platform that does not support AF_UNIX",
-)
 
 
 @unix_sockets_only

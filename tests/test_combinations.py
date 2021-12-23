@@ -1,6 +1,5 @@
 """Test module to express odd combinations of configurations."""
-# TODO: Move this to a more common location, like `conftest.py`.
-from test_async import unix_sockets_only
+from conftest import unix_sockets_only
 
 
 def test_parametrize_with_socket_enabled_and_allow_hosts(testdir, httpbin):
