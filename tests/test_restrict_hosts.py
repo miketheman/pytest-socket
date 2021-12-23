@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import inspect
-from urllib.parse import urlparse
 
 import pytest
 
@@ -43,7 +42,6 @@ def assert_connect(httpbin, testdir):
     def assert_socket_connect(should_pass, **kwargs):
         # get the name of the calling function
         test_name = inspect.stack()[1][3]
-        test_url = urlparse(httpbin.url)
 
         mark = ''
         cli_arg = kwargs.get('cli_arg', None)
@@ -56,7 +54,7 @@ def assert_connect(httpbin, testdir):
             elif isinstance(mark_arg, list):
                 hosts = '","'.join(mark_arg)
                 mark = f'@pytest.mark.allow_hosts(["{hosts}"])'
-        code = code_template.format(test_url.hostname, test_url.port, test_name, mark)
+        code = code_template.format(httpbin.host, httpbin.port, test_name, mark)
         testdir.makepyfile(code)
 
         if cli_arg:
@@ -68,7 +66,7 @@ def assert_connect(httpbin, testdir):
             result.assert_outcomes(1, 0, 0)
         else:
             result.assert_outcomes(0, 0, 1)
-            assert_host_blocked(result, test_url.hostname)
+            assert_host_blocked(result, httpbin.host)
     return assert_socket_connect
 
 
@@ -178,61 +176,58 @@ def test_global_restrict_via_config_fail(testdir):
 
 
 def test_global_restrict_via_config_pass(testdir, httpbin):
-    test_url = urlparse(httpbin.url)
     testdir.makepyfile(f"""
         import socket
 
         def test_global_restrict_via_config_pass():
-            socket.socket().connect(('{test_url.hostname}', {test_url.port}))
+            socket.socket().connect(('{httpbin.host}', {httpbin.port}))
     """)
     testdir.makeini(f"""
         [pytest]
-        addopts = --allow-hosts={test_url.hostname}
+        addopts = --allow-hosts={httpbin.host}
     """)
     result = testdir.runpytest()
     result.assert_outcomes(1, 0, 0)
 
 
 def test_test_isolation(testdir, httpbin):
-    test_url = urlparse(httpbin.url)
     testdir.makepyfile(f"""
         import pytest
         import socket
 
-        @pytest.mark.allow_hosts('{test_url.hostname}')
+        @pytest.mark.allow_hosts('{httpbin.host}')
         def test_pass():
-            socket.socket().connect(('{test_url.hostname}', {test_url.port}))
+            socket.socket().connect(('{httpbin.host}', {httpbin.port}))
 
         @pytest.mark.allow_hosts('2.2.2.2')
         def test_fail():
-            socket.socket().connect(('{test_url.hostname}', {test_url.port}))
+            socket.socket().connect(('{httpbin.host}', {httpbin.port}))
 
         def test_pass_2():
-            socket.socket().connect(('{test_url.hostname}', {test_url.port}))
+            socket.socket().connect(('{httpbin.host}', {httpbin.port}))
     """)
     result = testdir.runpytest()
     result.assert_outcomes(2, 0, 1)
-    assert_host_blocked(result, test_url.hostname)
+    assert_host_blocked(result, httpbin.host)
 
 
 def test_conflicting_cli_vs_marks(testdir, httpbin):
-    test_url = urlparse(httpbin.url)
     testdir.makepyfile(f"""
         import pytest
         import socket
 
-        @pytest.mark.allow_hosts('{test_url.hostname}')
+        @pytest.mark.allow_hosts('{httpbin.host}')
         def test_pass():
-            socket.socket().connect(('{test_url.hostname}', {test_url.port}))
+            socket.socket().connect(('{httpbin.host}', {httpbin.port}))
 
         @pytest.mark.allow_hosts('2.2.2.2')
         def test_fail():
-            socket.socket().connect(('{test_url.hostname}', {test_url.port}))
+            socket.socket().connect(('{httpbin.host}', {httpbin.port}))
 
         def test_fail_2():
-            socket.socket().connect(('2.2.2.2', {test_url.port}))
+            socket.socket().connect(('2.2.2.2', {httpbin.port}))
     """)
     result = testdir.runpytest('--allow-hosts=1.2.3.4')
     result.assert_outcomes(1, 0, 2)
     assert_host_blocked(result, '2.2.2.2')
-    assert_host_blocked(result, test_url.hostname)
+    assert_host_blocked(result, httpbin.host)
