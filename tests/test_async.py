@@ -26,7 +26,7 @@ def test_asynctest(testdir):
             async def test_inet_is_blocked(self):
                 socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     """)
-    result = testdir.runpytest("--verbose", "--disable-socket", "--allow-unix-socket")
+    result = testdir.runpytest("--disable-socket", "--allow-unix-socket")
     result.assert_outcomes(passed=1, skipped=0, failed=1)
 
 
@@ -53,7 +53,7 @@ def test_starlette(testdir):
             response = client.get('/')
             assert response.status_code == 200
     """)
-    result = testdir.runpytest("--verbose", "--disable-socket", "--allow-unix-socket")
+    result = testdir.runpytest("--disable-socket", "--allow-unix-socket")
     result.assert_outcomes(passed=1, skipped=0, failed=0)
 
 
@@ -72,5 +72,5 @@ def test_httpx_fails(testdir):
             async with httpx.AsyncClient() as client:
                 await client.get("http://www.example.com/")
     """)
-    result = testdir.runpytest("--verbose", "--disable-socket", "--allow-unix-socket")
+    result = testdir.runpytest("--disable-socket", "--allow-unix-socket")
     assert_socket_blocked(result)
