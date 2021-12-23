@@ -2,7 +2,7 @@ import socket
 
 import pytest
 
-pytest_plugins = 'pytester'
+pytest_plugins = "pytester"
 
 
 unix_sockets_only = pytest.mark.skipif(

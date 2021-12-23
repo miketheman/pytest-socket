@@ -15,44 +15,45 @@ class SocketBlockedError(RuntimeError):
 class SocketConnectBlockedError(RuntimeError):
     def __init__(self, allowed, host, *args, **kwargs):
         if allowed:
-            allowed = ','.join(allowed)
+            allowed = ",".join(allowed)
         super(SocketConnectBlockedError, self).__init__(
-            f'A test tried to use socket.socket.connect() with host "{host}" (allowed: "{allowed}").'
+            "A test tried to use socket.socket.connect() "
+            f'with host "{host}" (allowed: "{allowed}").'
         )
 
 
 def pytest_addoption(parser):
-    group = parser.getgroup('socket')
+    group = parser.getgroup("socket")
     group.addoption(
-        '--disable-socket',
-        action='store_true',
-        dest='disable_socket',
-        help='Disable socket.socket by default to block network calls.'
+        "--disable-socket",
+        action="store_true",
+        dest="disable_socket",
+        help="Disable socket.socket by default to block network calls.",
     )
     group.addoption(
-        '--allow-hosts',
-        dest='allow_hosts',
-        metavar='ALLOWED_HOSTS_CSV',
-        help='Only allow specified hosts through socket.socket.connect((host, port)).'
+        "--allow-hosts",
+        dest="allow_hosts",
+        metavar="ALLOWED_HOSTS_CSV",
+        help="Only allow specified hosts through socket.socket.connect((host, port)).",
     )
     group.addoption(
-        '--allow-unix-socket',
-        action='store_true',
-        dest='allow_unix_socket',
-        help='Allow calls if they are to Unix domain sockets'
+        "--allow-unix-socket",
+        action="store_true",
+        dest="allow_unix_socket",
+        help="Allow calls if they are to Unix domain sockets",
     )
 
 
 @pytest.fixture
 def socket_disabled(pytestconfig):
-    """ disable socket.socket for duration of this test function """
+    """disable socket.socket for duration of this test function"""
     disable_socket(allow_unix_socket=pytestconfig.__socket_allow_unix_socket)
     yield
 
 
 @pytest.fixture
 def socket_enabled(pytestconfig):
-    """ enable socket.socket for duration of this test function """
+    """enable socket.socket for duration of this test function"""
     enable_socket()
     yield
 
@@ -67,11 +68,11 @@ def _is_unix_socket(family) -> bool:
 
 
 def disable_socket(allow_unix_socket=False):
-    """ disable socket.socket to disable the Internet. useful in testing.
-    """
+    """disable socket.socket to disable the Internet. useful in testing."""
 
     class GuardedSocket(socket.socket):
-        """ socket guard to disable socket creation (from pytest-socket) """
+        """socket guard to disable socket creation (from pytest-socket)"""
+
         def __new__(cls, family=-1, type=-1, proto=-1, fileno=None):
             if _is_unix_socket(family) and allow_unix_socket:
                 return super().__new__(cls, family, type, proto, fileno)
@@ -82,20 +83,26 @@ def disable_socket(allow_unix_socket=False):
 
 
 def enable_socket():
-    """ re-enable socket.socket to enable the Internet. useful in testing.
-    """
+    """re-enable socket.socket to enable the Internet. useful in testing."""
     socket.socket = _true_socket
 
 
 def pytest_configure(config):
-    config.addinivalue_line("markers", "disable_socket(): Disable socket connections for a specific test")
-    config.addinivalue_line("markers", "enable_socket(): Enable socket connections for a specific test")
-    config.addinivalue_line("markers", "allow_hosts([hosts]): Restrict socket connection to defined list of hosts")
+    config.addinivalue_line(
+        "markers", "disable_socket(): Disable socket connections for a specific test"
+    )
+    config.addinivalue_line(
+        "markers", "enable_socket(): Enable socket connections for a specific test"
+    )
+    config.addinivalue_line(
+        "markers",
+        "allow_hosts([hosts]): Restrict socket connection to defined list of hosts",
+    )
 
     # Store the global configs in the `pytest.Config` object.
-    config.__socket_disabled = config.getoption('--disable-socket')
-    config.__socket_allow_unix_socket = config.getoption('--allow-unix-socket')
-    config.__socket_allow_hosts = config.getoption('--allow-hosts')
+    config.__socket_disabled = config.getoption("--disable-socket")
+    config.__socket_allow_unix_socket = config.getoption("--allow-unix-socket")
+    config.__socket_allow_hosts = config.getoption("--allow-hosts")
 
 
 def pytest_runtest_setup(item) -> None:
@@ -108,12 +115,16 @@ def pytest_runtest_setup(item) -> None:
     """
 
     # If test has the `enable_socket` marker, we accept this as most explicit.
-    if 'socket_enabled' in item.fixturenames or item.get_closest_marker('enable_socket'):
+    if "socket_enabled" in item.fixturenames or item.get_closest_marker(
+        "enable_socket"
+    ):
         enable_socket()
         return
 
     # If the test has the `disable_socket` marker, it's explicitly disabled.
-    if 'socket_disabled' in item.fixturenames or item.get_closest_marker('disable_socket'):
+    if "socket_disabled" in item.fixturenames or item.get_closest_marker(
+        "disable_socket"
+    ):
         disable_socket(item.config.__socket_allow_unix_socket)
         return
 
@@ -127,7 +138,7 @@ def pytest_runtest_setup(item) -> None:
 
 def _resolve_allow_hosts(item):
     """Resolve `allow_hosts` behaviors."""
-    mark_restrictions = item.get_closest_marker('allow_hosts')
+    mark_restrictions = item.get_closest_marker("allow_hosts")
     cli_restrictions = item.config.__socket_allow_hosts
     hosts = None
     if mark_restrictions:
@@ -156,10 +167,9 @@ def host_from_connect_args(args):
 
 
 def socket_allow_hosts(allowed=None, allow_unix_socket=False):
-    """ disable socket.socket.connect() to disable the Internet. useful in testing.
-    """
+    """disable socket.socket.connect() to disable the Internet. useful in testing."""
     if isinstance(allowed, str):
-        allowed = allowed.split(',')
+        allowed = allowed.split(",")
     if not isinstance(allowed, list):
         return
 
@@ -174,7 +184,6 @@ def socket_allow_hosts(allowed=None, allow_unix_socket=False):
 
 
 def _remove_restrictions():
-    """ restore socket.socket.* to allow access to the Internet. useful in testing.
-    """
+    """restore socket.socket.* to allow access to the Internet. useful in testing."""
     socket.socket = _true_socket
     socket.socket.connect = _true_connect
