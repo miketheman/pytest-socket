@@ -113,8 +113,8 @@ def pytest_runtest_setup(item) -> None:
     As the logic can be extensive, this method is allowed complexity.
     It may be refactored in the future to be more readable.
     """
-       
-    # If the given item is not a function test (i.e a DoctestItem) or otherwise 
+
+    # If the given item is not a function test (i.e a DoctestItem) or otherwise
     # has no support for fixtures, skip
     if not hasattr(item, "fixturenames"):
         return
