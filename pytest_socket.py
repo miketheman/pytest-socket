@@ -112,7 +112,12 @@ def pytest_runtest_setup(item) -> None:
     This is the bulk of the logic for the plugin.
     As the logic can be extensive, this method is allowed complexity.
     It may be refactored in the future to be more readable.
+
+    If the given item is not a function test (i.e a DoctestItem)
+    or otherwise has no support for fixtures, skip it.
     """
+    if not hasattr(item, "fixturenames"):
+        return
 
     # If test has the `enable_socket` marker, we accept this as most explicit.
     if "socket_enabled" in item.fixturenames or item.get_closest_marker(
