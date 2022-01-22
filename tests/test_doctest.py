@@ -1,4 +1,3 @@
-
 def test_function_with_doctest(testdir):
     testdir.makepyfile(
         '''
