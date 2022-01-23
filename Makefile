@@ -12,6 +12,7 @@ clean:
 	@rm -fr $(INSTALL_STAMP) .cache/ .coverage .pytest_cache/ *.egg-info/ dist/ htmlcov/
 
 install: $(INSTALL_STAMP)
+poetry.lock:
 $(INSTALL_STAMP): pyproject.toml poetry.lock
 ifndef POETRY
 	$(error "poetry is not available, please install it first.")
