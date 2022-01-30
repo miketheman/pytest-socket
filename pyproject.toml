@@ -49,6 +49,7 @@ socket = 'pytest_socket'
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/miketheman/pytest-socket/issues"
+"Change Log" = "https://github.com/miketheman/pytest-socket/blob/main/CHANGELOG.md"
 
 [tool.isort]
 known_first_party = ['pytest_socket', 'conftest', 'test_socket']
