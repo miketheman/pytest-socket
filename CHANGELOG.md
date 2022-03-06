@@ -71,7 +71,7 @@ Maintenance release.
 - Convert toolchain from pip/tox/twine to poetry
 - Replace TravisCI and Appveyor with GitHub Actions #36
 - Update for correct test output #31
-- Add renovatebot for dependecy updates #26
+- Add renovatebot for dependency updates #26
 
 ## [0.3.3][] (2019-02-09)
 
