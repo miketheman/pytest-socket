@@ -2,6 +2,8 @@
 import socket
 import ipaddress
 import pytest
+import re
+
 
 _true_socket = socket.socket
 _true_connect = socket.socket.connect
@@ -148,13 +150,17 @@ def socket_allow_hosts(allowed=None):
     if not isinstance(allowed, list):
         return
 
+    ips = [a for a in allowed if is_ipaddress(a)]
     cidrs = parse_cidrs_from_allowed(allowed)
+    domain_names = [a for a in parse_domains_from_allow(allowed)]
 
     def guarded_connect(inst, *args):
         host = host_from_connect_args(args)
-        if host and host in allowed:
+        if host and host in ips:
             return _true_connect(inst, *args)
         elif host_in_cidr_block(host, cidrs):
+            return _true_connect(inst, *args)
+        elif host_is_domain(host, domain_names):
             return _true_connect(inst, *args)
         raise SocketConnectBlockedError(allowed, host)
 
@@ -178,12 +184,49 @@ def is_valid_cidr(network):
     return True
 
 
+def is_ipaddress(address: str):
+    """
+    Determine if the address is a valid IPv4 address.
+    """
+    try:
+        socket.inet_aton(address)
+        return True
+    except socket.error:
+        return False
+
+
+def host_is_domain(host, domains):
+    if not host or len(domains) == 0:
+        return False
+    for domain in domains:
+        if address_is_domain(host, domain):
+            return True
+    return False
+
+
+def is_valid_domain(dn):
+    if dn.endswith('.'):
+        dn = dn[:-1]
+    if len(dn) < 1 or len(dn) > 253:
+        return False
+    ldh_re = re.compile('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$', re.IGNORECASE)
+    return all(ldh_re.match(x) for x in dn.split('.'))
+
+
 def parse_cidrs_from_allowed(allowed):
     return [x for x in allowed if is_valid_cidr(x)]
 
 
+def parse_domains_from_allow(allowed):
+    return [x for x in allowed if is_valid_domain(x)]
+
+
 def address_in_network(ip, net):
     return ipaddress.ip_address(ip) in ipaddress.ip_network(net)
+
+
+def address_is_domain(ip, domain):
+    return socket.gethostbyname(domain) == ip
 
 
 def remove_host_restrictions():
