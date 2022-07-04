@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import socket
 
 import pytest
@@ -9,14 +8,14 @@ _true_connect = socket.socket.connect
 
 class SocketBlockedError(RuntimeError):
     def __init__(self, *args, **kwargs):
-        super(SocketBlockedError, self).__init__("A test tried to use socket.socket.")
+        super().__init__("A test tried to use socket.socket.")
 
 
 class SocketConnectBlockedError(RuntimeError):
     def __init__(self, allowed, host, *args, **kwargs):
         if allowed:
             allowed = ",".join(allowed)
-        super(SocketConnectBlockedError, self).__init__(
+        super().__init__(
             "A test tried to use socket.socket.connect() "
             f'with host "{host}" (allowed: "{allowed}").'
         )
