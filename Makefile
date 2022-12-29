@@ -21,7 +21,7 @@ endif
 	@touch $(INSTALL_STAMP)
 
 test: $(INSTALL_STAMP)
-	@poetry run coverage run -m pytest $(PYTEST_FLAGS) ; coverage report --show-missing
+	@poetry run coverage run -m pytest $(PYTEST_FLAGS) ; poetry run coverage report --show-missing
 
 dist: clean $(INSTALL_STAMP)
 	@poetry build
