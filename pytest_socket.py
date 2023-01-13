@@ -180,7 +180,9 @@ def socket_allow_hosts(allowed=None, allow_unix_socket=False):
 
     def guarded_connect(inst, *args):
         host = host_from_connect_args(args)
-        if is_valid_host(host, allowed) or (_is_unix_socket(inst.family) and allow_unix_socket):
+        if is_valid_host(host, allowed) or (
+            _is_unix_socket(inst.family) and allow_unix_socket
+        ):
             return _true_connect(inst, *args)
 
         raise SocketConnectBlockedError(allowed, host)
