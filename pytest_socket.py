@@ -195,6 +195,8 @@ def _remove_restrictions():
 
 
 def is_valid_host(host, allowed):
+    if not host:
+        return
     ips = [ip for ip in allowed if "/" not in ip]
     if host in ips:
         return True
