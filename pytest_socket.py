@@ -198,11 +198,16 @@ def _remove_restrictions():
 
 def is_valid_host(host, allowed):
     if not host:
-        return
+        return False
+    
     ips = [ip for ip in allowed if "/" not in ip]
     if host in ips:
         return True
+
     networks = [ipaddress.ip_network(mask) for mask in allowed if "/" in mask]
+    if not networks: 
+        return False
+        
     ip = ipaddress.ip_address(host)
     for net in networks:
         if ip in net:
