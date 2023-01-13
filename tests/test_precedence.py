@@ -54,6 +54,34 @@ def test_global_disable_via_cli_flag(testdir):
     assert_socket_blocked(result)
 
 
+def test_force_enable_socket_via_cli_flag(testdir):
+    testdir.makepyfile(
+        """
+        import socket
+        import pytest
+
+        @pytest.mark.disable_socket
+        def test_socket():
+            socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        """
+    )
+    result = testdir.runpytest("--force-enable-socket")
+    result.assert_outcomes(passed=1)
+
+
+def test_force_enable_cli_flag_precedence(testdir):
+    testdir.makepyfile(
+        """
+        import socket
+
+        def test_socket():
+            socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        """
+    )
+    result = testdir.runpytest("--disable-socket", "--force-enable-socket")
+    result.assert_outcomes(passed=1)
+
+
 def test_global_disable_via_config(testdir):
     testdir.makepyfile(
         """
