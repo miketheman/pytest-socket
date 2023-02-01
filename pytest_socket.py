@@ -1,3 +1,4 @@
+import ipaddress
 import socket
 
 import pytest
@@ -172,12 +173,12 @@ def host_from_connect_args(args):
 
 def is_ipaddress(address: str):
     """
-    Determine if the address is a valid IPv4 address.
+    Determine if the address is a valid IPv4 or IPv6 address.
     """
     try:
-        socket.inet_aton(address)
+        ipaddress.ip_address(address)
         return True
-    except OSError:
+    except ValueError:
         return False
 
 
