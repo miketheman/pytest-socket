@@ -213,8 +213,9 @@ def socket_allow_hosts(allowed=None, allow_unix_socket=False):
 
     def guarded_connect(inst, *args):
         host = host_from_connect_args(args)
-        if host in allowed_hosts or \
-                (_is_unix_socket(inst.family) and allow_unix_socket):
+        if host in allowed_hosts or (
+            _is_unix_socket(inst.family) and allow_unix_socket
+        ):
             return _true_connect(inst, *args)
 
         raise SocketConnectBlockedError(allowed, host)
