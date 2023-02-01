@@ -1,3 +1,4 @@
+import ipaddress
 import socket
 
 import pytest
@@ -179,7 +180,9 @@ def socket_allow_hosts(allowed=None, allow_unix_socket=False):
 
     def guarded_connect(inst, *args):
         host = host_from_connect_args(args)
-        if host in allowed or (_is_unix_socket(inst.family) and allow_unix_socket):
+        if is_valid_host(host, allowed) or (
+            _is_unix_socket(inst.family) and allow_unix_socket
+        ):
             return _true_connect(inst, *args)
 
         raise SocketConnectBlockedError(allowed, host)
@@ -191,3 +194,22 @@ def _remove_restrictions():
     """restore socket.socket.* to allow access to the Internet. useful in testing."""
     socket.socket = _true_socket
     socket.socket.connect = _true_connect
+
+
+def is_valid_host(host, allowed):
+    if not host:
+        return False
+
+    ips = [ip for ip in allowed if "/" not in ip]
+    if host in ips:
+        return True
+
+    networks = [ipaddress.ip_network(mask) for mask in allowed if "/" in mask]
+    if not networks:
+        return False
+
+    ip = ipaddress.ip_address(host)
+    for net in networks:
+        if ip in net:
+            return True
+    return False
