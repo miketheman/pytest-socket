@@ -4,6 +4,44 @@ This document records all notable changes to
 [pytest-socket](https://pypi.python.org/pypi/pytest-socket). This
 project attempts to adhere to [Semantic Versioning](http://semver.org/).
 
+## [0.5.1][] (2020-01-23)
+
+### Fixes
+
+- Plugin no longer breaks on `doctests` #109
+
+### Changes
+
+- Dev dependency `starlette` updated
+- `make install` now installs dependencies if `poetry.lock` is missing/changed
+- Added a GitHub Workflow for stale issues
+- pre-commit auto-updated
+
+## [0.5.0][] (2021-12-23)
+
+### Changes
+
+- **Removed support for Python 3.6 and older.**
+- Consolidated configuration to `pytest.Config`
+- Replaced `autouse` fixture with `pytest_runtest_setup()` #88
+
+### Fixes
+
+- Prevent `IndexError` with `httpx.AsyncClient` #85 (and other frameworks)
+- Switched to using `poetry-core` in `pyproject.toml` #74
+- Handle family passed as keyword argument #75
+- BEhave correctly when passing in multiple configurations #93
+
+### Chores
+
+- Development updates
+- Documentation updates
+- Applied `black` code formatter
+- Applied `isort` import formatter
+- Added `pre-commit` hooks and CI status badges
+- Fixed code coverage reporting
+- Updated Python versions in tests
+
 ## [0.4.1][] (2021-08-29)
 
 - Include tests and configs in source distribution archive #69
@@ -33,7 +71,7 @@ Maintenance release.
 - Convert toolchain from pip/tox/twine to poetry
 - Replace TravisCI and Appveyor with GitHub Actions #36
 - Update for correct test output #31
-- Add renovatebot for dependecy updates #26
+- Add renovatebot for dependency updates #26
 
 ## [0.3.3][] (2019-02-09)
 
@@ -79,3 +117,5 @@ Maintenance release.
 [0.3.5]: https://github.com/miketheman/pytest-socket/compare/0.3.4...0.3.5
 [0.4.0]: https://github.com/miketheman/pytest-socket/compare/0.3.5...0.4.0
 [0.4.1]: https://github.com/miketheman/pytest-socket/compare/0.4.0...0.4.1
+[0.5.0]: https://github.com/miketheman/pytest-socket/compare/0.4.1...0.5.0
+[0.5.1]: https://github.com/miketheman/pytest-socket/compare/0.5.0...0.5.1

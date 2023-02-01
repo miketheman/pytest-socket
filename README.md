@@ -3,8 +3,10 @@
 [![PyPI current version](https://img.shields.io/pypi/v/pytest-socket.svg)](https://pypi.python.org/pypi/pytest-socket)
 [![Python Support](https://img.shields.io/pypi/pyversions/pytest-socket.svg)](https://pypi.python.org/pypi/pytest-socket)
 [![Tests](https://github.com/miketheman/pytest-socket/workflows/Python%20Tests/badge.svg)](https://github.com/miketheman/pytest-socket/actions?query=workflow%3A%22Python+Tests%22)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/miketheman/pytest-socket/main.svg)](https://results.pre-commit.ci/latest/github/miketheman/pytest-socket/main)
 [![Maintainability](https://api.codeclimate.com/v1/badges/1608a75b1c3a20211992/maintainability)](https://codeclimate.com/github/miketheman/pytest-socket/maintainability)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmiketheman%2Fpytest-socket.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmiketheman%2Fpytest-socket?ref=badge_shield)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 A plugin to use with Pytest to disable or restrict `socket` calls during
 tests to ensure network calls are prevented.

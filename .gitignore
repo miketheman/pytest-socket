@@ -75,3 +75,6 @@ target/
 
 # poetry lock file - for libraries only
 poetry.lock
+
+# Installation tracking file
+.install.stamp
