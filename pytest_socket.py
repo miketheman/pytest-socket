@@ -171,7 +171,7 @@ def host_from_connect_args(args):
         return host_from_address(address)
 
 
-def is_ipaddress(address: str):
+def is_ipaddress(address: str) -> bool:
     """
     Determine if the address is a valid IPv4 or IPv6 address.
     """
@@ -189,17 +189,19 @@ def resolve_hostname(hostname):
         return None
 
 
-def treat_allowed(allowed):
-    allowed_hosts = []
-    for allow in allowed:
-        allow = allow.strip()
-        if is_ipaddress(allow):
-            allowed_hosts.append(allow)
+def normalize_allowed_hosts(allowed_hosts):
+    """Convert all items in `allowed_hosts` to an IP address."""
+    ip_hosts = []
+    for host in allowed_hosts:
+        host = host.strip()
+        if is_ipaddress(host):
+            ip_hosts.append(host)
+        else:
+            resolved = resolve_hostname(host)
+            if resolved:
+                ip_hosts.append(resolved)
 
-        resolved = resolve_hostname(allow)
-        if resolved:
-            allowed_hosts.append(resolved)
-    return allowed_hosts
+    return ip_hosts
 
 
 def socket_allow_hosts(allowed=None, allow_unix_socket=False):
@@ -210,7 +212,7 @@ def socket_allow_hosts(allowed=None, allow_unix_socket=False):
     if not isinstance(allowed, list):
         return
 
-    allowed_hosts = treat_allowed(allowed)
+    allowed_hosts = normalize_allowed_hosts(allowed)
 
     def guarded_connect(inst, *args):
         host = host_from_connect_args(args)
