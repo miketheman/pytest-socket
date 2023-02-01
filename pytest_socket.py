@@ -177,7 +177,7 @@ def is_ipaddress(address: str):
     try:
         socket.inet_aton(address)
         return True
-    except socket.error:
+    except OSError:
         return False
 
 
