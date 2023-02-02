@@ -106,6 +106,14 @@ def test_single_cli_arg_connect_enabled(assert_connect):
     assert_connect(True, cli_arg=localhost)
 
 
+def test_single_cli_arg_connect_enabled_hostname_resolved(assert_connect):
+    assert_connect(True, cli_arg="localhost")
+
+
+def test_single_cli_arg_connect_enabled_hostname_unresolvable(assert_connect):
+    assert_connect(False, cli_arg="unresolvable")
+
+
 def test_single_cli_arg_connect_unicode_enabled(assert_connect):
     assert_connect(True, cli_arg=localhost, code_template=connect_unicode_code_template)
 

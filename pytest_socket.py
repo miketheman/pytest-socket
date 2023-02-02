@@ -1,3 +1,4 @@
+import ipaddress
 import socket
 
 import pytest
@@ -170,16 +171,54 @@ def host_from_connect_args(args):
         return host_from_address(address)
 
 
+def is_ipaddress(address: str) -> bool:
+    """
+    Determine if the address is a valid IPv4 or IPv6 address.
+    """
+    try:
+        ipaddress.ip_address(address)
+        return True
+    except ValueError:
+        return False
+
+
+def resolve_hostname(hostname):
+    try:
+        return socket.gethostbyname(hostname)
+    except socket.gaierror:
+        return None
+
+
+def normalize_allowed_hosts(allowed_hosts):
+    """Convert all items in `allowed_hosts` to an IP address."""
+    ip_hosts = []
+    for host in allowed_hosts:
+        host = host.strip()
+        if is_ipaddress(host):
+            ip_hosts.append(host)
+        else:
+            resolved = resolve_hostname(host)
+            if resolved:
+                ip_hosts.append(resolved)
+
+    return ip_hosts
+
+
 def socket_allow_hosts(allowed=None, allow_unix_socket=False):
     """disable socket.socket.connect() to disable the Internet. useful in testing."""
     if isinstance(allowed, str):
         allowed = allowed.split(",")
+
     if not isinstance(allowed, list):
         return
 
+    allowed_hosts = normalize_allowed_hosts(allowed)
+
     def guarded_connect(inst, *args):
         host = host_from_connect_args(args)
-        if host in allowed or (_is_unix_socket(inst.family) and allow_unix_socket):
+        if host in allowed_hosts or (
+            _is_unix_socket(inst.family) and allow_unix_socket
+        ):
             return _true_connect(inst, *args)
 
         raise SocketConnectBlockedError(allowed, host)
