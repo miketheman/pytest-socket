@@ -4,7 +4,18 @@ This document records all notable changes to
 [pytest-socket](https://pypi.python.org/pypi/pytest-socket). This
 project attempts to adhere to [Semantic Versioning](http://semver.org/).
 
-## [0.5.1][] (2020-01-23)
+## [0.6.0][] (2023-02-03)
+
+Enhancements:
+
+- Support hostname in `--allow-hosts` #189
+
+Changes:
+
+- Dependency updates
+- Development updates
+
+## [0.5.1][] (2022-01-23)
 
 ### Fixes
 
@@ -119,3 +130,4 @@ Maintenance release.
 [0.4.1]: https://github.com/miketheman/pytest-socket/compare/0.4.0...0.4.1
 [0.5.0]: https://github.com/miketheman/pytest-socket/compare/0.4.1...0.5.0
 [0.5.1]: https://github.com/miketheman/pytest-socket/compare/0.5.0...0.5.1
+[0.6.0]: https://github.com/miketheman/pytest-socket/compare/0.5.1...0.6.0
