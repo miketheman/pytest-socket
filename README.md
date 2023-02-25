@@ -67,7 +67,7 @@ def pytest_runtest_setup():
 ```
 
 If you exceptionally want to enable socket for one particular execution
-pass `--force-enable-socket`. It takes precedence over `--disable-socket`. 
+pass `--force-enable-socket`. It takes precedence over `--disable-socket`.
 
 To enable Unix sockets during the test run (e.g. for async), add this option:
 

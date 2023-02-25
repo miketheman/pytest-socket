@@ -126,8 +126,8 @@ def pytest_runtest_setup(item) -> None:
     if not hasattr(item, "fixturenames"):
         return
 
-    # If test has the `enable_socket` marker, fixture or cli,
-    # we accept this as most explicit.
+    # If test has the `enable_socket` marker, fixture or
+    # it's forced from the CLI, we accept this as most explicit.
     if (
         "socket_enabled" in item.fixturenames
         or item.get_closest_marker("enable_socket")
