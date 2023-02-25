@@ -66,6 +66,9 @@ def pytest_runtest_setup():
     disable_socket()
 ```
 
+If you exceptionally want to enable socket for one particular execution
+pass `--force-enable-socket`. It takes precedence over `--disable-socket`. 
+
 To enable Unix sockets during the test run (e.g. for async), add this option:
 
 ```ini
@@ -100,6 +103,7 @@ or for whole test run
 [pytest]
 addopts = --allow-hosts=127.0.0.1,127.0.1.1
 ```
+
 
 ### Frequently Asked Questions
 
