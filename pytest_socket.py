@@ -226,6 +226,8 @@ def socket_allow_hosts(allowed=None, allow_unix_socket=False):
 
     def guarded_connect(inst, *args):
         host = host_from_connect_args(args)
+        if host and not is_ipaddress(host):
+            host = resolve_hostname(host)
         if host in allowed_hosts or (
             _is_unix_socket(inst.family) and allow_unix_socket
         ):
