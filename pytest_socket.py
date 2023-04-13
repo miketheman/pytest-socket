@@ -1,5 +1,7 @@
 import ipaddress
+import itertools
 import socket
+from collections import defaultdict
 
 import pytest
 
@@ -192,24 +194,24 @@ def is_ipaddress(address: str) -> bool:
         return False
 
 
-def resolve_hostname(hostname):
+def resolve_hostnames(hostname: str) -> set[str]:
     try:
-        return socket.gethostbyname(hostname)
+        return {
+            addr_struct[0] for *_, addr_struct in socket.getaddrinfo(hostname, None)
+        }
     except socket.gaierror:
-        return None
+        return set()
 
 
-def normalize_allowed_hosts(allowed_hosts):
+def normalize_allowed_hosts(allowed_hosts: list[str]) -> dict[str, set[str]]:
     """Convert all items in `allowed_hosts` to an IP address."""
-    ip_hosts = []
+    ip_hosts = defaultdict(set)
     for host in allowed_hosts:
         host = host.strip()
         if is_ipaddress(host):
-            ip_hosts.append(host)
+            ip_hosts[host].add(host)
         else:
-            resolved = resolve_hostname(host)
-            if resolved:
-                ip_hosts.append(resolved)
+            ip_hosts[host].update(resolve_hostnames(host))
 
     return ip_hosts
 
@@ -222,7 +224,16 @@ def socket_allow_hosts(allowed=None, allow_unix_socket=False):
     if not isinstance(allowed, list):
         return
 
-    allowed_hosts = normalize_allowed_hosts(allowed)
+    allowed_hosts_by_host = normalize_allowed_hosts(allowed)
+    allowed_hosts = set(itertools.chain(*allowed_hosts_by_host.values()))
+    allowed_list = [
+        (
+            host
+            if len(normalized) == 1 and next(iter(normalized)) == host
+            else f"{host} ({','.join(normalized)})"
+        )
+        for host, normalized in allowed_hosts_by_host.items()
+    ]
 
     def guarded_connect(inst, *args):
         host = host_from_connect_args(args)
@@ -231,7 +242,7 @@ def socket_allow_hosts(allowed=None, allow_unix_socket=False):
         ):
             return _true_connect(inst, *args)
 
-        raise SocketConnectBlockedError(allowed, host)
+        raise SocketConnectBlockedError(allowed_list, host)
 
     socket.socket.connect = guarded_connect
 
