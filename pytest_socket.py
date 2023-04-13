@@ -1,6 +1,7 @@
 import ipaddress
 import itertools
 import socket
+import typing
 from collections import defaultdict
 
 import pytest
@@ -194,7 +195,7 @@ def is_ipaddress(address: str) -> bool:
         return False
 
 
-def resolve_hostnames(hostname: str) -> set[str]:
+def resolve_hostnames(hostname: str) -> typing.Set[str]:
     try:
         return {
             addr_struct[0] for *_, addr_struct in socket.getaddrinfo(hostname, None)
@@ -203,7 +204,9 @@ def resolve_hostnames(hostname: str) -> set[str]:
         return set()
 
 
-def normalize_allowed_hosts(allowed_hosts: list[str]) -> dict[str, set[str]]:
+def normalize_allowed_hosts(
+    allowed_hosts: typing.List[str],
+) -> typing.Dict[str, typing.Set[str]]:
     """Convert all items in `allowed_hosts` to an IP address."""
     ip_hosts = defaultdict(set)
     for host in allowed_hosts:
