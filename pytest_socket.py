@@ -207,7 +207,7 @@ def resolve_hostnames(hostname: str) -> typing.Set[str]:
 def normalize_allowed_hosts(
     allowed_hosts: typing.List[str],
 ) -> typing.Dict[str, typing.Set[str]]:
-    """Convert all items in `allowed_hosts` to an IP address."""
+    """Map all items in `allowed_hosts` to IP addresses."""
     ip_hosts = defaultdict(set)
     for host in allowed_hosts:
         host = host.strip()
