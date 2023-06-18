@@ -1,6 +1,7 @@
 import pytest
 
 from conftest import unix_sockets_only
+from tests.common import assert_socket_blocked
 
 PYFILE_SOCKET_USED_IN_TEST_ARGS = """
     import socket
@@ -24,13 +25,6 @@ PYFILE_SOCKET_NO_ARGS = """
     def test_socket():
         socket.socket()
 """
-
-
-def assert_socket_blocked(result):
-    result.assert_outcomes(passed=0, skipped=0, failed=1)
-    result.stdout.fnmatch_lines(
-        "*SocketBlockedError: A test tried to use socket.socket.*"
-    )
 
 
 @pytest.mark.parametrize(
