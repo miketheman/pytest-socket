@@ -25,6 +25,7 @@ classifiers = [
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: Implementation :: CPython",
     "Operating System :: OS Independent",
     "License :: OSI Approved :: MIT License",
@@ -39,10 +40,9 @@ coverage = "^7.0"
 pytest = "^7.0"
 pytest-httpbin = "^2.0.0"
 pytest-randomly = "^3.5.0"
-asynctest = "^0.13.0"
 requests = "^2.26.0"
-starlette = "^0.26.1"
-httpx = "^0.23.0"
+starlette = "^0.28.0"
+httpx = "^0.24.0"
 # See https://github.com/postmanlabs/httpbin/pull/674
 httpbin = { git = "https://github.com/maximino-dev/httpbin.git", rev = "651c03a73" }
 
@@ -52,6 +52,9 @@ socket = 'pytest_socket'
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/miketheman/pytest-socket/issues"
 "Change Log" = "https://github.com/miketheman/pytest-socket/blob/main/CHANGELOG.md"
+
+[tool.coverage.report]
+include = ["*pytest_socket*", "tests*"]
 
 [tool.isort]
 known_first_party = ['pytest_socket', 'conftest', 'test_socket']
