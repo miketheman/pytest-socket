@@ -38,7 +38,7 @@ urlopen_hostname_code_template = """
     {3}
     def {2}():
         # Skip {{1}} as we expect {{0}} to be the full hostname with or without port
-        assert urlopen('{0}').getcode() == 200
+        assert urlopen('http://{0}').getcode() == 200
 """
 
 
@@ -79,6 +79,8 @@ def assert_connect(httpbin, testdir):
         else:
             result.assert_outcomes(0, 0, 1)
             assert_host_blocked(result, host)
+
+        return result
 
     return assert_socket_connect
 
@@ -121,12 +123,16 @@ def test_single_cli_arg_connect_enabled_localhost_resolved(assert_connect):
     assert_connect(True, cli_arg="localhost")
 
 
-def test_single_cli_arg_connect_enabled_hostname_resolved(assert_connect):
-    assert_connect(
-        True,
-        cli_arg="github.com",
-        host="https://github.com/",
+def test_single_cli_arg_connect_disabled_hostname_resolved(assert_connect):
+    result = assert_connect(
+        False,
+        cli_arg="localhost",
+        host="1.2.3.4",
         code_template=urlopen_hostname_code_template,
+    )
+    result.stdout.fnmatch_lines(
+        '*A test tried to use socket.socket.connect() with host "1.2.3.4" '
+        '(allowed: "localhost (::1,127.0.0.1)")*'
     )
 
 

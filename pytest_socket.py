@@ -229,14 +229,16 @@ def socket_allow_hosts(allowed=None, allow_unix_socket=False):
 
     allowed_hosts_by_host = normalize_allowed_hosts(allowed)
     allowed_hosts = set(itertools.chain(*allowed_hosts_by_host.values()))
-    allowed_list = [
-        (
-            host
-            if len(normalized) == 1 and next(iter(normalized)) == host
-            else f"{host} ({','.join(normalized)})"
-        )
-        for host, normalized in allowed_hosts_by_host.items()
-    ]
+    allowed_list = sorted(
+        [
+            (
+                host
+                if len(normalized) == 1 and next(iter(normalized)) == host
+                else f"{host} ({','.join(normalized)})"
+            )
+            for host, normalized in allowed_hosts_by_host.items()
+        ]
+    )
 
     def guarded_connect(inst, *args):
         host = host_from_connect_args(args)
