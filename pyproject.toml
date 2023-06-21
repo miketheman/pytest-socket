@@ -8,8 +8,8 @@ readme = "README.md"
 homepage = "https://pypi.org/project/pytest-socket/"
 repository = "https://github.com/miketheman/pytest-socket"
 include = [
-    { path = "LICENSE" },
-    { path = "README.md" },
+    { path = "LICENSE", format = "sdist" },
+    { path = "README.md", format = "sdist" },
     { path = "tests", format = "sdist" },
     { path = ".flake8", format = "sdist" },
 ]
