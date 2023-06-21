@@ -132,7 +132,7 @@ def test_single_cli_arg_connect_disabled_hostname_resolved(assert_connect):
     )
     result.stdout.fnmatch_lines(
         '*A test tried to use socket.socket.connect() with host "1.2.3.4" '
-        '(allowed: "localhost (::1,127.0.0.1)")*'
+        '(allowed: "localhost (127.0.0.1,::1)")*'
     )
 
 

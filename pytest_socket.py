@@ -234,7 +234,7 @@ def socket_allow_hosts(allowed=None, allow_unix_socket=False):
             (
                 host
                 if len(normalized) == 1 and next(iter(normalized)) == host
-                else f"{host} ({','.join(normalized)})"
+                else f"{host} ({','.join(sorted(normalized))})"
             )
             for host, normalized in allowed_hosts_by_host.items()
         ]
