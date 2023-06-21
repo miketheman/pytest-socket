@@ -31,6 +31,16 @@ urlopen_code_template = """
         assert urlopen('http://{0}:{1}/').getcode() == 200
 """
 
+urlopen_hostname_code_template = """
+    import pytest
+    from urllib.request import urlopen
+
+    {3}
+    def {2}():
+        # Skip {{1}} as we expect {{0}} to be the full hostname with or without port
+        assert urlopen('http://{0}').getcode() == 200
+"""
+
 
 def assert_host_blocked(result, host):
     result.stdout.fnmatch_lines(
@@ -45,6 +55,7 @@ def assert_connect(httpbin, testdir):
         test_name = inspect.stack()[1][3]
 
         mark = ""
+        host = kwargs.get("host", httpbin.host)
         cli_arg = kwargs.get("cli_arg", None)
         code_template = kwargs.get("code_template", connect_code_template)
         mark_arg = kwargs.get("mark_arg", None)
@@ -55,7 +66,7 @@ def assert_connect(httpbin, testdir):
             elif isinstance(mark_arg, list):
                 hosts = '","'.join(mark_arg)
                 mark = f'@pytest.mark.allow_hosts(["{hosts}"])'
-        code = code_template.format(httpbin.host, httpbin.port, test_name, mark)
+        code = code_template.format(host, httpbin.port, test_name, mark)
         testdir.makepyfile(code)
 
         if cli_arg:
@@ -67,7 +78,9 @@ def assert_connect(httpbin, testdir):
             result.assert_outcomes(1, 0, 0)
         else:
             result.assert_outcomes(0, 0, 1)
-            assert_host_blocked(result, httpbin.host)
+            assert_host_blocked(result, host)
+
+        return result
 
     return assert_socket_connect
 
@@ -106,8 +119,21 @@ def test_single_cli_arg_connect_enabled(assert_connect):
     assert_connect(True, cli_arg=localhost)
 
 
-def test_single_cli_arg_connect_enabled_hostname_resolved(assert_connect):
+def test_single_cli_arg_connect_enabled_localhost_resolved(assert_connect):
     assert_connect(True, cli_arg="localhost")
+
+
+def test_single_cli_arg_connect_disabled_hostname_resolved(assert_connect):
+    result = assert_connect(
+        False,
+        cli_arg="localhost",
+        host="1.2.3.4",
+        code_template=urlopen_hostname_code_template,
+    )
+    result.stdout.fnmatch_lines(
+        '*A test tried to use socket.socket.connect() with host "1.2.3.4" '
+        '(allowed: "localhost (127.0.0.1,::1)")*'
+    )
 
 
 def test_single_cli_arg_connect_enabled_hostname_unresolvable(assert_connect):
