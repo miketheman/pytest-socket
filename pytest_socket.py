@@ -11,18 +11,11 @@ _true_connect = socket.socket.connect
 
 
 class SocketBlockedError(RuntimeError):
-    def __init__(self, *_args, **_kwargs):
-        super().__init__("A test tried to use socket.socket.")
+    pass
 
 
 class SocketConnectBlockedError(RuntimeError):
-    def __init__(self, allowed, host, *_args, **_kwargs):
-        if allowed:
-            allowed = ",".join(allowed)
-        super().__init__(
-            "A test tried to use socket.socket.connect() "
-            f'with host "{host}" (allowed: "{allowed}").'
-        )
+    pass
 
 
 def pytest_addoption(parser):
@@ -86,7 +79,7 @@ def disable_socket(allow_unix_socket=False):
             if _is_unix_socket(family) and allow_unix_socket:
                 return super().__new__(cls, family, type, proto, fileno)
 
-            raise SocketBlockedError()
+            raise SocketBlockedError("A test tried to use socket.socket.")
 
     socket.socket = GuardedSocket
 
@@ -247,7 +240,10 @@ def socket_allow_hosts(allowed=None, allow_unix_socket=False):
         ):
             return _true_connect(inst, *args)
 
-        raise SocketConnectBlockedError(allowed_list, host)
+        allowed = ",".join(allowed_list) if allowed_list else "[]"
+        message =  ("A test tried to use socket.socket.connect() "
+                    f'with host "{host}" (allowed: "{allowed}").')
+        raise SocketConnectBlockedError(message)
 
     socket.socket.connect = guarded_connect
 
