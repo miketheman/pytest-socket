@@ -241,8 +241,10 @@ def socket_allow_hosts(allowed=None, allow_unix_socket=False):
             return _true_connect(inst, *args)
 
         allowed = ",".join(allowed_list) if allowed_list else "[]"
-        message =  ("A test tried to use socket.socket.connect() "
-                    f'with host "{host}" (allowed: "{allowed}").')
+        message = (
+            "A test tried to use socket.socket.connect() "
+            f'with host "{host}" (allowed: "{allowed}").'
+        )
         raise SocketConnectBlockedError(message)
 
     socket.socket.connect = guarded_connect
