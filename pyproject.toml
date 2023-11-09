@@ -31,7 +31,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.7"
-pytest = ">=3.6.3"
+pytest = ">=6.2.5"
 
 [tool.poetry.dev-dependencies]
 coverage = "^7.0"
