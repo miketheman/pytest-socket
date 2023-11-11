@@ -39,7 +39,7 @@ pytest-httpbin = "^2.0.0"
 pytest-randomly = "^3.5.0"
 requests = "^2.26.0"
 starlette = "^0.29.0"
-httpx = "^0.24.0"
+httpx = "^0.25.0"
 # See https://github.com/postmanlabs/httpbin/pull/674
 httpbin = { git = "https://github.com/maximino-dev/httpbin.git", rev = "651c03a73" }
 
