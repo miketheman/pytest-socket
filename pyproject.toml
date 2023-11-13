@@ -36,7 +36,7 @@ pytest = ">=6.2.5"
 [tool.poetry.dev-dependencies]
 coverage = "^7.0"
 pytest-httpbin = "^2.0.0"
-pytest-randomly = "^3.5.0"
+pytest-randomly = "^3.15.0"
 requests = "^2.26.0"
 starlette = "^0.29.0"
 httpx = "^0.25.0"
