@@ -227,8 +227,10 @@ def socket_allow_hosts(allowed=None, allow_unix_socket=False):
     if not isinstance(allowed, list):
         return
 
-    allowed_hosts_by_host = normalize_allowed_hosts(allowed)
-    allowed_hosts = set(itertools.chain(*allowed_hosts_by_host.values()))
+    allowed_ip_hosts_by_host = normalize_allowed_hosts(allowed)
+    allowed_ip_hosts_and_hostnames = set(
+        itertools.chain(*allowed_ip_hosts_by_host.values())
+    ) | set(allowed_ip_hosts_by_host.keys())
     allowed_list = sorted(
         [
             (
@@ -236,13 +238,13 @@ def socket_allow_hosts(allowed=None, allow_unix_socket=False):
                 if len(normalized) == 1 and next(iter(normalized)) == host
                 else f"{host} ({','.join(sorted(normalized))})"
             )
-            for host, normalized in allowed_hosts_by_host.items()
+            for host, normalized in allowed_ip_hosts_by_host.items()
         ]
     )
 
     def guarded_connect(inst, *args):
         host = host_from_connect_args(args)
-        if host in allowed_hosts or (
+        if host in allowed_ip_hosts_and_hostnames or (
             _is_unix_socket(inst.family) and allow_unix_socket
         ):
             return _true_connect(inst, *args)

@@ -123,6 +123,14 @@ def test_single_cli_arg_connect_enabled_localhost_resolved(assert_connect):
     assert_connect(True, cli_arg="localhost")
 
 
+def test_single_cli_arg_127_0_0_1_hostname_localhost_connect_disabled(assert_connect):
+    assert_connect(False, cli_arg=localhost, host="localhost")
+
+
+def test_single_cli_arg_localhost_hostname_localhost_connect_enabled(assert_connect):
+    assert_connect(True, cli_arg="localhost", host="localhost")
+
+
 def test_single_cli_arg_connect_disabled_hostname_resolved(assert_connect):
     result = assert_connect(
         False,
