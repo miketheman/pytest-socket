@@ -1141,13 +1141,13 @@ files = [
 
 [[package]]
 name = "starlette"
-version = "0.29.0"
+version = "0.32.0.post1"
 description = "The little ASGI library that shines."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "starlette-0.29.0-py3-none-any.whl", hash = "sha256:8814471c91ad98da5bec5792db16520a2a6d54b83e049dbc06a64c2019565081"},
-    {file = "starlette-0.29.0.tar.gz", hash = "sha256:9bda894656cfa3806cef16c868e670385eb4e569703e6b92c7a853683360188e"},
+    {file = "starlette-0.32.0.post1-py3-none-any.whl", hash = "sha256:cd0cb10ddb49313f609cedfac62c8c12e56c7314b66d89bb077ba228bada1b09"},
+    {file = "starlette-0.32.0.post1.tar.gz", hash = "sha256:e54e2b7e2fb06dff9eac40133583f10dfa05913f5a85bf26f427c7a40a9a3d02"},
 ]
 
 [package.dependencies]
@@ -1302,4 +1302,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "72eed897e70af3717b11112a3556059c1961ac1c7b0d6ecb53ab8510c5ad7855"
+content-hash = "97af3be2c8ef8c33541322b32da1d08d63402a457b515752b68b81c52459bdd5"
