@@ -40,6 +40,8 @@ pytest-randomly = "^3.15.0"
 requests = "^2.26.0"
 starlette = "^0.36.1"
 httpx = "^0.26.0"
+# Waiting for new release. See https://github.com/psf/httpbin/issues/35
+httpbin = { git = "https://github.com/psf/httpbin.git", rev = "1f6e0498" }
 
 [tool.poetry.plugins.pytest11]
 socket = 'pytest_socket'
