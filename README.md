@@ -19,7 +19,7 @@ tests to ensure network calls are prevented.
 
 ## Requirements
 
-- [Pytest](https://github.com/pytest-dev/pytest) 3.6.3 or greater
+- [Pytest](https://github.com/pytest-dev/pytest) 6.2.5 or greater
 
 ## Installation
 
@@ -27,7 +27,7 @@ You can install `pytest-socket` via [pip](https://pypi.python.org/pypi/pip/)
 from [PyPI](https://pypi.python.org/pypi):
 
 ```console
-$ pip install pytest-socket
+pip install pytest-socket
 ```
 
 or add to your `pyproject.toml` for [poetry](https://python-poetry.org/):
@@ -103,7 +103,6 @@ or for whole test run
 [pytest]
 addopts = --allow-hosts=127.0.0.1,127.0.1.1
 ```
-
 
 ### Frequently Asked Questions
 
