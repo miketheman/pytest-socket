@@ -4,6 +4,22 @@ This document records all notable changes to
 [pytest-socket](https://pypi.python.org/pypi/pytest-socket). This
 project attempts to adhere to [Semantic Versioning](http://semver.org/).
 
+## [0.7.0][] (2024-01-28)
+
+Enhancements:
+
+- Force enable socket CLI flag #186
+- Use `getaddrinfo()` instead of `gethostbyname()` #209
+- Allow both Hosts via IP and Name #275
+
+Changes:
+
+- **Removed support for Python 3.7 and older.**
+- Dependency updates
+- Development updates
+- Testing updates
+- Emit license and readme for source distribution #233
+
 ## [0.6.0][] (2023-02-03)
 
 Enhancements:
@@ -131,3 +147,4 @@ Maintenance release.
 [0.5.0]: https://github.com/miketheman/pytest-socket/compare/0.4.1...0.5.0
 [0.5.1]: https://github.com/miketheman/pytest-socket/compare/0.5.0...0.5.1
 [0.6.0]: https://github.com/miketheman/pytest-socket/compare/0.5.1...0.6.0
+[0.7.0]: https://github.com/miketheman/pytest-socket/compare/0.6.0...0.7.0
