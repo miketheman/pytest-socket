@@ -1,4 +1,5 @@
 """Test module to express odd combinations of configurations."""
+
 from conftest import unix_sockets_only
 
 
