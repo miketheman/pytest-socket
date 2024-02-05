@@ -1190,13 +1190,13 @@ files = [
 
 [[package]]
 name = "starlette"
-version = "0.36.1"
+version = "0.37.0"
 description = "The little ASGI library that shines."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "starlette-0.36.1-py3-none-any.whl", hash = "sha256:d5b43a72f475fd1b9707f661aa66da42d59ae16c9b2a5845b4edee4309c425ee"},
-    {file = "starlette-0.36.1.tar.gz", hash = "sha256:96df8541093dfd37624b5bf980802b99750db6718dd3ca341618fbbcdd6136fb"},
+    {file = "starlette-0.37.0-py3-none-any.whl", hash = "sha256:53a95037cf6a563fca942ea16ba0260edce10258c213cbd554adc263fad22dfc"},
+    {file = "starlette-0.37.0.tar.gz", hash = "sha256:d1ec71a84fd1f691b800361a6a64ecb0e9c17ab308507ccc7f911727888293c7"},
 ]
 
 [package.dependencies]
@@ -1204,7 +1204,7 @@ anyio = ">=3.4.0,<5"
 typing-extensions = {version = ">=3.10.0", markers = "python_version < \"3.10\""}
 
 [package.extras]
-full = ["httpx (>=0.22.0)", "itsdangerous", "jinja2", "python-multipart", "pyyaml"]
+full = ["httpx (>=0.22.0)", "itsdangerous", "jinja2", "python-multipart (>=0.0.7)", "pyyaml"]
 
 [[package]]
 name = "tomli"
@@ -1279,4 +1279,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "819b9ee475e36db5b20e374b7fa8341a6d67cd76a5388863d0bc50b482694d1b"
+content-hash = "96f610e5cc96a0ecfe0440698212ca80d5d405aedcf8ad96f8b172b5b8bb2b6b"
