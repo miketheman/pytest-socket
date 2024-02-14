@@ -1,5 +1,6 @@
-from conftest import unix_sockets_only
 from common import assert_socket_blocked
+
+from conftest import unix_sockets_only
 
 
 @unix_sockets_only
