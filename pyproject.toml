@@ -37,7 +37,7 @@ pytest = ">=6.2.5"
 coverage = "^7.5"
 pytest-httpbin = "^2.0.0"
 pytest-randomly = "^3.15.0"
-requests = "^2.26.0"
+requests = "^2.32.0"
 starlette = "^0.37.2"
 httpx = "^0.27.0"
 # Waiting for new release. See https://github.com/psf/httpbin/issues/35
