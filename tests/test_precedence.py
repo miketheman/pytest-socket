@@ -1,7 +1,7 @@
 """Test module to express precedence tests between the different
 configuration combinations"""
 
-from tests.common import assert_socket_blocked
+from common import assert_socket_blocked
 
 
 def test_disable_via_fixture(testdir):
