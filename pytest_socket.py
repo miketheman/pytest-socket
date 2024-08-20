@@ -3,6 +3,7 @@ import itertools
 import socket
 import typing
 from collections import defaultdict
+from dataclasses import dataclass
 
 import pytest
 
@@ -56,7 +57,8 @@ def pytest_addoption(parser):
 @pytest.fixture
 def socket_disabled(pytestconfig):
     """disable socket.socket for duration of this test function"""
-    disable_socket(allow_unix_socket=pytestconfig.__socket_allow_unix_socket)
+    socket_config = pytestconfig.stash[_STASH_KEY]
+    disable_socket(allow_unix_socket=socket_config.allow_unix_socket)
     yield
 
 
@@ -65,6 +67,18 @@ def socket_enabled(pytestconfig):
     """enable socket.socket for duration of this test function"""
     enable_socket()
     yield
+
+
+@dataclass
+class _PytestSocketConfig:
+    socket_disabled: bool
+    socket_force_enabled: bool
+    allow_unix_socket: bool
+    allow_hosts: typing.Union[str, typing.List[str], None]
+    resolution_cache: typing.Dict[str, typing.Set[str]]
+
+
+_STASH_KEY = pytest.StashKey[_PytestSocketConfig]()
 
 
 def _is_unix_socket(family) -> bool:
@@ -109,10 +123,13 @@ def pytest_configure(config):
     )
 
     # Store the global configs in the `pytest.Config` object.
-    config.__socket_force_enabled = config.getoption("--force-enable-socket")
-    config.__socket_disabled = config.getoption("--disable-socket")
-    config.__socket_allow_unix_socket = config.getoption("--allow-unix-socket")
-    config.__socket_allow_hosts = config.getoption("--allow-hosts")
+    config.stash[_STASH_KEY] = _PytestSocketConfig(
+        socket_force_enabled=config.getoption("--force-enable-socket"),
+        socket_disabled=config.getoption("--disable-socket"),
+        allow_unix_socket=config.getoption("--allow-unix-socket"),
+        allow_hosts=config.getoption("--allow-hosts"),
+        resolution_cache={},
+    )
 
 
 def pytest_runtest_setup(item) -> None:
@@ -129,12 +146,14 @@ def pytest_runtest_setup(item) -> None:
     if not hasattr(item, "fixturenames"):
         return
 
+    socket_config = item.config.stash[_STASH_KEY]
+
     # If test has the `enable_socket` marker, fixture or
     # it's forced from the CLI, we accept this as most explicit.
     if (
         "socket_enabled" in item.fixturenames
         or item.get_closest_marker("enable_socket")
-        or item.config.__socket_force_enabled
+        or socket_config.socket_force_enabled
     ):
         enable_socket()
         return
@@ -143,27 +162,34 @@ def pytest_runtest_setup(item) -> None:
     if "socket_disabled" in item.fixturenames or item.get_closest_marker(
         "disable_socket"
     ):
-        disable_socket(item.config.__socket_allow_unix_socket)
+        disable_socket(socket_config.allow_unix_socket)
         return
 
     # Resolve `allow_hosts` behaviors.
     hosts = _resolve_allow_hosts(item)
 
     # Finally, check the global config and disable socket if needed.
-    if item.config.__socket_disabled and not hosts:
-        disable_socket(item.config.__socket_allow_unix_socket)
+    if socket_config.socket_disabled and not hosts:
+        disable_socket(socket_config.allow_unix_socket)
 
 
 def _resolve_allow_hosts(item):
     """Resolve `allow_hosts` behaviors."""
+    socket_config = item.config.stash[_STASH_KEY]
+
     mark_restrictions = item.get_closest_marker("allow_hosts")
-    cli_restrictions = item.config.__socket_allow_hosts
+    cli_restrictions = socket_config.allow_hosts
     hosts = None
     if mark_restrictions:
         hosts = mark_restrictions.args[0]
     elif cli_restrictions:
         hosts = cli_restrictions
-    socket_allow_hosts(hosts, allow_unix_socket=item.config.__socket_allow_unix_socket)
+
+    socket_allow_hosts(
+        hosts,
+        allow_unix_socket=socket_config.allow_unix_socket,
+        resolution_cache=socket_config.resolution_cache,
+    )
     return hosts
 
 
@@ -206,20 +232,29 @@ def resolve_hostnames(hostname: str) -> typing.Set[str]:
 
 def normalize_allowed_hosts(
     allowed_hosts: typing.List[str],
+    resolution_cache: typing.Optional[typing.Dict[str, typing.List[str]]] = None,
 ) -> typing.Dict[str, typing.Set[str]]:
     """Map all items in `allowed_hosts` to IP addresses."""
+    if resolution_cache is None:
+        resolution_cache = {}
     ip_hosts = defaultdict(set)
     for host in allowed_hosts:
         host = host.strip()
         if is_ipaddress(host):
             ip_hosts[host].add(host)
-        else:
-            ip_hosts[host].update(resolve_hostnames(host))
+            continue
+        if host not in resolution_cache:
+            resolution_cache[host] = resolve_hostnames(host)
+        ip_hosts[host].update(resolution_cache[host])
 
     return ip_hosts
 
 
-def socket_allow_hosts(allowed=None, allow_unix_socket=False):
+def socket_allow_hosts(
+    allowed: typing.Union[str, typing.List[str], None] = None,
+    allow_unix_socket: bool = False,
+    resolution_cache: typing.Optional[typing.Dict[str, typing.List[str]]] = None,
+) -> None:
     """disable socket.socket.connect() to disable the Internet. useful in testing."""
     if isinstance(allowed, str):
         allowed = allowed.split(",")
