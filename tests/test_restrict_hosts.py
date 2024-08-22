@@ -4,6 +4,8 @@ import socket
 
 import pytest
 
+from pytest_socket import normalize_allowed_hosts
+
 localhost = "127.0.0.1"
 
 connect_code_template = """
@@ -85,6 +87,25 @@ def assert_connect(httpbin, testdir):
         return result
 
     return assert_socket_connect
+
+
+@pytest.fixture
+def getaddrinfo_hosts(monkeypatch):
+    hosts = []
+
+    def _getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+        hosts.append(host)
+        v4 = (
+            socket.AF_INET,
+            socket.SOCK_STREAM,
+            socket.IPPROTO_TCP,
+            "",
+            ("127.0.0.127", 0),
+        )
+        return [v4]
+
+    monkeypatch.setattr(socket, "getaddrinfo", _getaddrinfo)
+    return hosts
 
 
 def test_help_message(testdir):
@@ -302,24 +323,38 @@ def test_conflicting_cli_vs_marks(testdir, httpbin):
     assert_host_blocked(result, httpbin.host)
 
 
-def test_name_resolution_cached(testdir, monkeypatch):
-    """
-    pytest-socket only resolves each allowed name once.
-    """
-    resolutions = []
+def test_normalize_allowed_hosts(getaddrinfo_hosts):
+    """normalize_allowed_hosts() produces a map of hosts to IP addresses."""
+    assert normalize_allowed_hosts(["127.0.0.1", "localhost", "localhost", "::1"]) == {
+        "::1": {"::1"},
+        "127.0.0.1": {"127.0.0.1"},
+        "localhost": {"127.0.0.127"},
+    }
 
-    def _getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
-        resolutions.append(host)
-        v4 = (
-            socket.AF_INET,
-            socket.SOCK_STREAM,
-            socket.IPPROTO_TCP,
-            "",
-            ("127.0.0.1", 0),
-        )
-        return [v4]
+    assert getaddrinfo_hosts == ["localhost"]
 
-    monkeypatch.setattr(socket, "getaddrinfo", _getaddrinfo)
+
+def test_normalize_allowed_hosts_cache(getaddrinfo_hosts):
+    """normalize_allowed_hosts() caches name resolutions when passed a cache"""
+    cache = {}
+
+    assert normalize_allowed_hosts(["localhost"], cache) == {
+        "localhost": {"127.0.0.127"}
+    }
+    assert cache == {"localhost": {"127.0.0.127"}}
+    assert getaddrinfo_hosts == ["localhost"]
+
+    del getaddrinfo_hosts[:]
+
+    assert normalize_allowed_hosts(["localhost", "localhost"], cache) == {
+        "localhost": {"127.0.0.127"}
+    }
+    assert cache == {"localhost": {"127.0.0.127"}}
+    assert getaddrinfo_hosts == []
+
+
+def test_name_resolution_cached(testdir, getaddrinfo_hosts):
+    """pytest-socket only resolves each allowed name once."""
 
     testdir.makepyfile(
         """
@@ -345,7 +380,7 @@ def test_name_resolution_cached(testdir, monkeypatch):
     [result] = hooks.getcalls("pytest_sessionfinish")
     assert result.session.testsfailed == 0
 
-    assert collections.Counter(resolutions) == {
+    assert collections.Counter(getaddrinfo_hosts) == {
         "name.internal": 1,
         "name.another": 1,
     }
