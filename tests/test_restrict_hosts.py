@@ -1,4 +1,6 @@
+import collections
 import inspect
+import socket
 
 import pytest
 
@@ -298,3 +300,52 @@ def test_conflicting_cli_vs_marks(testdir, httpbin):
     result.assert_outcomes(1, 0, 2)
     assert_host_blocked(result, "2.2.2.2")
     assert_host_blocked(result, httpbin.host)
+
+
+def test_name_resolution_cached(testdir, monkeypatch):
+    """
+    pytest-socket only resolves each allowed name once.
+    """
+    resolutions = []
+
+    def _getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+        resolutions.append(host)
+        v4 = (
+            socket.AF_INET,
+            socket.SOCK_STREAM,
+            socket.IPPROTO_TCP,
+            "",
+            ("127.0.0.1", 0),
+        )
+        return [v4]
+
+    monkeypatch.setattr(socket, "getaddrinfo", _getaddrinfo)
+
+    testdir.makepyfile(
+        """
+        import pytest
+        import socket
+
+        @pytest.mark.allow_hosts('name.internal')
+        def test_1():
+            ...
+
+        @pytest.mark.allow_hosts(['name.internal', 'name.another'])
+        def test_2():
+            ...
+
+        @pytest.mark.allow_hosts('name.internal')
+        @pytest.mark.parametrize("i", ["3", "4", "5"])
+        def test_456(i):
+            ...
+        """
+    )
+
+    hooks = testdir.inline_run("--allow-hosts=name.internal,name.internal")
+    [result] = hooks.getcalls("pytest_sessionfinish")
+    assert result.session.testsfailed == 0
+
+    assert collections.Counter(resolutions) == {
+        "name.internal": 1,
+        "name.another": 1,
+    }
