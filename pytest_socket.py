@@ -262,7 +262,7 @@ def socket_allow_hosts(
     if not isinstance(allowed, list):
         return
 
-    allowed_ip_hosts_by_host = normalize_allowed_hosts(allowed)
+    allowed_ip_hosts_by_host = normalize_allowed_hosts(allowed, resolution_cache)
     allowed_ip_hosts_and_hostnames = set(
         itertools.chain(*allowed_ip_hosts_by_host.values())
     ) | set(allowed_ip_hosts_by_host.keys())
