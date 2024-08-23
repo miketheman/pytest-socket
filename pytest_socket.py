@@ -3,7 +3,7 @@ import itertools
 import socket
 import typing
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import pytest
 
@@ -75,7 +75,7 @@ class _PytestSocketConfig:
     socket_force_enabled: bool
     allow_unix_socket: bool
     allow_hosts: typing.Union[str, typing.List[str], None]
-    resolution_cache: typing.Dict[str, typing.Set[str]]
+    resolution_cache: typing.Dict[str, typing.Set[str]] = field(default_factory=dict)
 
 
 _STASH_KEY = pytest.StashKey[_PytestSocketConfig]()
@@ -128,7 +128,6 @@ def pytest_configure(config):
         socket_disabled=config.getoption("--disable-socket"),
         allow_unix_socket=config.getoption("--allow-unix-socket"),
         allow_hosts=config.getoption("--allow-hosts"),
-        resolution_cache={},
     )
 
 
