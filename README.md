@@ -19,7 +19,7 @@ tests to ensure network calls are prevented.
 
 ## Requirements
 
-- [Pytest](https://github.com/pytest-dev/pytest) 6.2.5 or greater
+- [Pytest](https://github.com/pytest-dev/pytest) 7.0 or greater
 
 ## Installation
 
@@ -43,21 +43,21 @@ Run `pytest --disable-socket`, tests should fail on any access to `socket` or
 libraries using socket with a `SocketBlockedError`.
 
 To add this flag as the default behavior, add this section to your
-[`pytest.ini`](https://docs.pytest.org/en/6.2.x/customize.html#pytest-ini):
+[`pytest.ini`](https://docs.pytest.org/en/stable/reference/customize.html#pytest-ini):
 
 ```ini
 [pytest]
 addopts = --disable-socket
 ```
 
-or add this to your [`setup.cfg`](https://docs.pytest.org/en/6.2.x/customize.html#setup-cfg):
+or add this to your [`setup.cfg`](https://docs.pytest.org/en/stable/reference/customize.html#setup-cfg):
 
 ```ini
 [tool:pytest]
 addopts = --disable-socket
 ```
 
-or update your [`conftest.py`](https://docs.pytest.org/en/6.2.x/writing_plugins.html#conftest-py-plugins) to include:
+or update your [`conftest.py`](https://docs.pytest.org/en/stable/how-to/writing_plugins.html#conftest-py-local-per-directory-plugins) to include:
 
 ```python
 from pytest_socket import disable_socket
