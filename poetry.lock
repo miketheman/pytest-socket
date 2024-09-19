@@ -953,20 +953,20 @@ dev = ["argcomplete", "attrs (>=19.2)", "hypothesis (>=3.56)", "mock", "pygments
 
 [[package]]
 name = "pytest-httpbin"
-version = "2.0.0"
+version = "2.1.0"
 description = "Easily test your HTTP library against a local copy of httpbin"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "pytest-httpbin-2.0.0.tar.gz", hash = "sha256:3e739cad9b8f8df58952df7329d9295fe17449d3a647f49c4ce634fd81d71b8e"},
-    {file = "pytest_httpbin-2.0.0-py2.py3-none-any.whl", hash = "sha256:d977f8095796e27a45911bbafa3587c081c9025e060e2fdb559794db2d45e82d"},
+    {file = "pytest_httpbin-2.1.0-py3-none-any.whl", hash = "sha256:b3bf7346cc2ad231447189cd85b458e341056684a7a69d69533dd29692209cdd"},
+    {file = "pytest_httpbin-2.1.0.tar.gz", hash = "sha256:d40579838443228327f9fe4f08d9338bee8885c29fe933e5f2d58c20a26c33c6"},
 ]
 
 [package.dependencies]
 httpbin = "*"
 
 [package.extras]
-test = ["pytest", "requests", "werkzeug (<2.1.0)"]
+test = ["pytest", "requests"]
 
 [[package]]
 name = "pytest-randomly"
@@ -1301,4 +1301,4 @@ test = ["big-O", "jaraco.functools", "jaraco.itertools", "jaraco.test", "more-it
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "29419d27cedd3340d196f82b376b6e63b9b6460664b8857ab8c1dd1e187bb2ec"
+content-hash = "16469127846590d4ea680b3e937db6058c9c53073952742fae4fb8b30e379a2e"
