@@ -30,6 +30,6 @@ repos:
     -   id: pyupgrade
         args: [--py37-plus]
 -   repo: https://github.com/jendrikseipp/vulture
-    rev: 'v2.11'
+    rev: 'v2.12'
     hooks:
     -   id: vulture
