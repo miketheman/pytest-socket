@@ -1211,13 +1211,13 @@ files = [
 
 [[package]]
 name = "starlette"
-version = "0.39.1"
+version = "0.39.2"
 description = "The little ASGI library that shines."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "starlette-0.39.1-py3-none-any.whl", hash = "sha256:0d31c90dacae588734e91b98cb4469fd37848ef23d2dd34355c5542bc827c02a"},
-    {file = "starlette-0.39.1.tar.gz", hash = "sha256:33c5a94f64d3ab2c799b2715b45f254a3752f229d334f1562a3aaf78c23eab95"},
+    {file = "starlette-0.39.2-py3-none-any.whl", hash = "sha256:134dd6deb655a9775991d352312d53f1879775e5cc8a481f966e83416a2c3f71"},
+    {file = "starlette-0.39.2.tar.gz", hash = "sha256:caaa3b87ef8518ef913dac4f073dea44e85f73343ad2bdc17941931835b2a26a"},
 ]
 
 [package.dependencies]
@@ -1301,4 +1301,4 @@ test = ["big-O", "jaraco.functools", "jaraco.itertools", "jaraco.test", "more-it
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "ad95883224573bd9535b24419ae37f748d4575bdbf0215360eec181e40d913ee"
+content-hash = "e5ef8b7860ee98c839a23b1aea0a0e8fc35bedf5b8f78afc02aa8609edd9ce36"
