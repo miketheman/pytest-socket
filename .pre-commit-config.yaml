@@ -2,7 +2,7 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
     -   id: check-yaml
     -   id: check-added-large-files
@@ -21,7 +21,7 @@ repos:
     -   id: isort
         name: isort (python)
 -   repo: https://github.com/psf/black
-    rev: 24.8.0
+    rev: 24.10.0
     hooks:
     -   id: black
 -   repo: https://github.com/asottile/pyupgrade
@@ -30,6 +30,6 @@ repos:
     -   id: pyupgrade
         args: [--py37-plus]
 -   repo: https://github.com/jendrikseipp/vulture
-    rev: 'v2.12'
+    rev: 'v2.13'
     hooks:
     -   id: vulture
