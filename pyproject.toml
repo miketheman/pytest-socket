@@ -19,7 +19,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Testing",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -31,7 +30,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 pytest = ">=7.0.0"
 
 [tool.poetry.dev-dependencies]
