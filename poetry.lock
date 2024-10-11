@@ -601,12 +601,14 @@ files = [
 
 [[package]]
 name = "httpbin"
-version = "0.10.1"
+version = "0.10.2"
 description = "HTTP Request and Response Service"
 optional = false
 python-versions = ">=3.7"
-files = []
-develop = false
+files = [
+    {file = "httpbin-0.10.2-py2.py3-none-any.whl", hash = "sha256:8e28e67f72ead4419977c9f2dba4ce86ce08768ada30ef9a87288527bb925d00"},
+    {file = "httpbin-0.10.2.tar.gz", hash = "sha256:632148698261c8684ea2d2b624cdea845b402b1fe91736e89df886408c6317a9"},
+]
 
 [package.dependencies]
 brotlicffi = "*"
@@ -623,12 +625,6 @@ werkzeug = ">=2.2.2"
 [package.extras]
 mainapp = ["gevent", "gunicorn"]
 test = ["pytest", "tox"]
-
-[package.source]
-type = "git"
-url = "https://github.com/psf/httpbin.git"
-reference = "1f6e0498"
-resolved_reference = "1f6e049812ed139145f89bc92238f0e77eda7506"
 
 [[package]]
 name = "httpcore"
@@ -1269,4 +1265,4 @@ test = ["big-O", "jaraco.functools", "jaraco.itertools", "jaraco.test", "more-it
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "52c3496894c4475f563182ede667e7d618ad35064892b9ff84c61feb801a831e"
+content-hash = "12ef25dbd099f735ebbbad8ab074e8487cee1ca0cadad50683d3ddf33d860cf0"
