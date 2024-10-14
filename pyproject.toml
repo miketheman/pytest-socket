@@ -19,18 +19,18 @@ classifiers = [
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Testing",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: Implementation :: CPython",
     "Operating System :: OS Independent",
     "License :: OSI Approved :: MIT License",
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 pytest = ">=7.0.0"
 
 [tool.poetry.dev-dependencies]
@@ -40,8 +40,7 @@ pytest-randomly = "^3.15.0"
 requests = "^2.32.3"
 starlette = "^0.39.2"
 httpx = "^0.27.2"
-# Waiting for new release. See https://github.com/psf/httpbin/issues/35
-httpbin = { git = "https://github.com/psf/httpbin.git", rev = "1f6e0498" }
+httpbin = "^0.10.2"
 
 [tool.poetry.plugins.pytest11]
 socket = 'pytest_socket'

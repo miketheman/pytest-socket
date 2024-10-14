@@ -28,7 +28,7 @@ repos:
     rev: v3.18.0
     hooks:
     -   id: pyupgrade
-        args: [--py37-plus]
+        args: [--py39-plus]
 -   repo: https://github.com/jendrikseipp/vulture
     rev: 'v2.13'
     hooks:

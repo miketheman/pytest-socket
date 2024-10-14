@@ -74,8 +74,8 @@ class _PytestSocketConfig:
     socket_disabled: bool
     socket_force_enabled: bool
     allow_unix_socket: bool
-    allow_hosts: typing.Union[str, typing.List[str], None]
-    resolution_cache: typing.Dict[str, typing.Set[str]] = field(default_factory=dict)
+    allow_hosts: typing.Union[str, list[str], None]
+    resolution_cache: dict[str, set[str]] = field(default_factory=dict)
 
 
 _STASH_KEY = pytest.StashKey[_PytestSocketConfig]()
@@ -220,7 +220,7 @@ def is_ipaddress(address: str) -> bool:
         return False
 
 
-def resolve_hostnames(hostname: str) -> typing.Set[str]:
+def resolve_hostnames(hostname: str) -> set[str]:
     try:
         return {
             addr_struct[0] for *_, addr_struct in socket.getaddrinfo(hostname, None)
@@ -230,9 +230,9 @@ def resolve_hostnames(hostname: str) -> typing.Set[str]:
 
 
 def normalize_allowed_hosts(
-    allowed_hosts: typing.List[str],
-    resolution_cache: typing.Optional[typing.Dict[str, typing.List[str]]] = None,
-) -> typing.Dict[str, typing.Set[str]]:
+    allowed_hosts: list[str],
+    resolution_cache: typing.Optional[dict[str, list[str]]] = None,
+) -> dict[str, set[str]]:
     """Map all items in `allowed_hosts` to IP addresses."""
     if resolution_cache is None:
         resolution_cache = {}
@@ -250,9 +250,9 @@ def normalize_allowed_hosts(
 
 
 def socket_allow_hosts(
-    allowed: typing.Union[str, typing.List[str], None] = None,
+    allowed: typing.Union[str, list[str], None] = None,
     allow_unix_socket: bool = False,
-    resolution_cache: typing.Optional[typing.Dict[str, typing.List[str]]] = None,
+    resolution_cache: typing.Optional[dict[str, list[str]]] = None,
 ) -> None:
     """disable socket.socket.connect() to disable the Internet. useful in testing."""
     if isinstance(allowed, str):
