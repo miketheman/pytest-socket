@@ -25,11 +25,11 @@ repos:
     hooks:
     -   id: black
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.19.0
+    rev: v3.19.1
     hooks:
     -   id: pyupgrade
         args: [--py37-plus]
 -   repo: https://github.com/jendrikseipp/vulture
-    rev: 'v2.13'
+    rev: 'v2.14'
     hooks:
     -   id: vulture
