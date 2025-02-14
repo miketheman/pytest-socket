@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytest-socket"
-version = "0.6.0"
+version = "0.7.0"
 description = "Pytest Plugin to disable socket calls during tests"
 authors = ["Mike Fiedler <miketheman@gmail.com>"]
 license = "MIT"
@@ -19,30 +19,29 @@ classifiers = [
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Testing",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: Implementation :: CPython",
     "Operating System :: OS Independent",
     "License :: OSI Approved :: MIT License",
 ]
 
 [tool.poetry.dependencies]
-python = "^3.7"
-pytest = ">=3.6.3"
+python = "^3.8"
+pytest = ">=7.0.0"
 
 [tool.poetry.dev-dependencies]
-coverage = "^7.0"
-pytest = "^7.0"
-pytest-httpbin = "^2.0.0"
-pytest-randomly = "^3.5.0"
-requests = "^2.26.0"
-starlette = "^0.29.0"
-httpx = "^0.24.0"
-# See https://github.com/postmanlabs/httpbin/pull/674
-httpbin = { git = "https://github.com/maximino-dev/httpbin.git", rev = "651c03a73" }
+coverage = "^7.6"
+pytest-httpbin = "^2.1.0"
+pytest-randomly = "^3.15.0"
+requests = "^2.32.3"
+starlette = "^0.44.0"
+httpx = "^0.28.1"
+# Waiting for new release. See https://github.com/psf/httpbin/issues/35
+httpbin = { git = "https://github.com/psf/httpbin.git", rev = "1f6e0498" }
 
 [tool.poetry.plugins.pytest11]
 socket = 'pytest_socket'

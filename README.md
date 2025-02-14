@@ -19,7 +19,7 @@ tests to ensure network calls are prevented.
 
 ## Requirements
 
-- [Pytest](https://github.com/pytest-dev/pytest) 3.6.3 or greater
+- [Pytest](https://github.com/pytest-dev/pytest) 7.0 or greater
 
 ## Installation
 
@@ -27,7 +27,7 @@ You can install `pytest-socket` via [pip](https://pypi.python.org/pypi/pip/)
 from [PyPI](https://pypi.python.org/pypi):
 
 ```console
-$ pip install pytest-socket
+pip install pytest-socket
 ```
 
 or add to your `pyproject.toml` for [poetry](https://python-poetry.org/):
@@ -43,21 +43,21 @@ Run `pytest --disable-socket`, tests should fail on any access to `socket` or
 libraries using socket with a `SocketBlockedError`.
 
 To add this flag as the default behavior, add this section to your
-[`pytest.ini`](https://docs.pytest.org/en/6.2.x/customize.html#pytest-ini):
+[`pytest.ini`](https://docs.pytest.org/en/stable/reference/customize.html#pytest-ini):
 
 ```ini
 [pytest]
 addopts = --disable-socket
 ```
 
-or add this to your [`setup.cfg`](https://docs.pytest.org/en/6.2.x/customize.html#setup-cfg):
+or add this to your [`setup.cfg`](https://docs.pytest.org/en/stable/reference/customize.html#setup-cfg):
 
 ```ini
 [tool:pytest]
 addopts = --disable-socket
 ```
 
-or update your [`conftest.py`](https://docs.pytest.org/en/6.2.x/writing_plugins.html#conftest-py-plugins) to include:
+or update your [`conftest.py`](https://docs.pytest.org/en/stable/how-to/writing_plugins.html#conftest-py-local-per-directory-plugins) to include:
 
 ```python
 from pytest_socket import disable_socket
@@ -104,7 +104,6 @@ or for whole test run
 addopts = --allow-hosts=127.0.0.1,127.0.1.1
 ```
 
-
 ### Frequently Asked Questions
 
 Q: Why is network access disabled in some of my tests but not others?
@@ -150,3 +149,6 @@ This plugin came about due to the efforts by
 [\@hangtwenty](https://github.com/hangtwenty) solving a [StackOverflow
 question](https://stackoverflow.com/a/30064664), then converted into a
 pytest plugin by [\@miketheman](https://github.com/miketheman).
+
+## Star History
+[![Star History Chart](https://api.star-history.com/svg?repos=miketheman/pytest-socket)](https://star-history.com/#miketheman/pytest-socket&Date)
