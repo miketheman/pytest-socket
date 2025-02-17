@@ -12,7 +12,7 @@ repos:
     -   id: editorconfig-checker
         alias: ec
 -   repo: https://github.com/pycqa/flake8
-    rev: '7.1.1'
+    rev: '7.1.2'
     hooks:
     -   id: flake8
 -   repo: https://github.com/pycqa/isort
