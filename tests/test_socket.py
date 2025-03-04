@@ -1,7 +1,7 @@
 import pytest
+from common import assert_socket_blocked
 
 from conftest import unix_sockets_only
-from tests.common import assert_socket_blocked
 
 PYFILE_SOCKET_USED_IN_TEST_ARGS = """
     import socket
