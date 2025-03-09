@@ -1,5 +1,7 @@
 import ipaddress
 import itertools
+import json
+import os
 import socket
 import typing
 from collections import defaultdict
@@ -7,8 +9,24 @@ from dataclasses import dataclass, field
 
 import pytest
 
+_SUBPROCESS_ENVVAR = "_PYTEST_SOCKET_SUBPROCESS"
 _true_socket = socket.socket
 _true_connect = socket.socket.connect
+
+
+def update_subprocess_config(config: typing.Dict[str, object]) -> None:
+    """Enable pytest-socket in Python subprocesses.
+
+    The configuration will be read by the .pth file to mirror the
+    restrictions in the main process.
+    """
+    os.environ[_SUBPROCESS_ENVVAR] = json.dumps(config)
+
+
+def delete_subprocess_config() -> None:
+    """Disable pytest-socket in Python subprocesses."""
+    if _SUBPROCESS_ENVVAR in os.environ:
+        del os.environ[_SUBPROCESS_ENVVAR]
 
 
 class SocketBlockedError(RuntimeError):
@@ -103,11 +121,15 @@ def disable_socket(allow_unix_socket=False):
             raise SocketBlockedError()
 
     socket.socket = GuardedSocket
+    update_subprocess_config(
+        {"mode": "disable", "allow_unix_socket": allow_unix_socket}
+    )
 
 
 def enable_socket():
     """re-enable socket.socket to enable the Internet. useful in testing."""
     socket.socket = _true_socket
+    delete_subprocess_config()
 
 
 def pytest_configure(config):
@@ -249,6 +271,25 @@ def normalize_allowed_hosts(
     return ip_hosts
 
 
+def _create_guarded_connect(
+    allowed_hosts: typing.Sequence[str],
+    allow_unix_socket: bool,
+    _pretty_allowed_list: typing.Sequence[str],
+) -> typing.Callable:
+    """Create a function to replace socket.connect."""
+
+    def guarded_connect(inst, *args):
+        host = host_from_connect_args(args)
+        if host in allowed_hosts or (
+            _is_unix_socket(inst.family) and allow_unix_socket
+        ):
+            return _true_connect(inst, *args)
+
+        raise SocketConnectBlockedError(_pretty_allowed_list, host)
+
+    return guarded_connect
+
+
 def socket_allow_hosts(
     allowed: typing.Union[str, typing.List[str], None] = None,
     allow_unix_socket: bool = False,
@@ -276,19 +317,21 @@ def socket_allow_hosts(
         ]
     )
 
-    def guarded_connect(inst, *args):
-        host = host_from_connect_args(args)
-        if host in allowed_ip_hosts_and_hostnames or (
-            _is_unix_socket(inst.family) and allow_unix_socket
-        ):
-            return _true_connect(inst, *args)
-
-        raise SocketConnectBlockedError(allowed_list, host)
-
-    socket.socket.connect = guarded_connect
+    socket.socket.connect = _create_guarded_connect(
+        allowed_ip_hosts_and_hostnames, allow_unix_socket, allowed_list
+    )
+    update_subprocess_config(
+        {
+            "mode": "allow-hosts",
+            "allowed_hosts": list(allowed_ip_hosts_and_hostnames),
+            "allow_unix_socket": allow_unix_socket,
+            "_pretty_allowed_list": allowed_list,
+        }
+    )
 
 
 def _remove_restrictions():
     """restore socket.socket.* to allow access to the Internet. useful in testing."""
     socket.socket = _true_socket
     socket.socket.connect = _true_connect
+    delete_subprocess_config()
