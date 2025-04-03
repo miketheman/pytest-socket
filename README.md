@@ -16,6 +16,7 @@ tests to ensure network calls are prevented.
 ## Features
 
 - Disables all network calls flowing through Python\'s `socket` interface.
+- Python subprocesses are supported
 
 ## Requirements
 

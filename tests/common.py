@@ -14,3 +14,9 @@ def assert_socket_blocked(result, passed=0, skipped=0, failed=1):
     result.stdout.fnmatch_lines(
         "*Socket*Blocked*Error: A test tried to use socket.socket.*"
     )
+
+
+def assert_host_blocked(result, host):
+    result.stdout.fnmatch_lines(
+        f'*A test tried to use socket.socket.connect() with host "{host}"*'
+    )

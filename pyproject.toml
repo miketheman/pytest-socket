@@ -12,6 +12,7 @@ include = [
     { path = "README.md", format = "sdist" },
     { path = "tests", format = "sdist" },
     { path = ".flake8", format = "sdist" },
+    { path = "pytest_socket.pth", format = ["sdist", "wheel"] }
 ]
 classifiers = [
     "Development Status :: 4 - Beta",

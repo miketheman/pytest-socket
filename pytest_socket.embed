@@ -1,0 +1,48 @@
+"""Inject pytest-socket into Python subprocesses via a .pth file.
+
+To update the .pth file, simply run this script which will write the code
+below to a .pth file in the same directory as a single line.
+"""
+
+import os
+os.environ["_PYTEST_SOCKET_SUBPROCESS"] = ""
+
+# .PTH START
+if config := os.getenv("_PYTEST_SOCKET_SUBPROCESS", None):
+    import json
+    state = None
+    try:
+        import socket
+        from pytest_socket import disable_socket, _create_guarded_connect
+        state = json.loads(config)
+
+        if state["mode"] == "disable":
+            disable_socket(allow_unix_socket=state["allow_unix_socket"])
+        elif state["mode"] == "allow-hosts":
+            socket.socket.connect = _create_guarded_connect(
+                allowed_hosts=state["allowed_hosts"],
+                allow_unix_socket=state["allow_unix_socket"],
+                _pretty_allowed_list=state["_pretty_allowed_list"]
+            )
+
+    except Exception as exc:
+        import sys
+        sys.stderr.write(
+            "pytest-socket: Failed to set up subprocess socket patching.\n"
+            f"Configuration: {state}\n"
+            f"{exc.__class__.__name__}: {exc}\n"
+        )
+# .PTH END
+
+if __name__ == "__main__":
+    from pathlib import Path
+
+    src = Path(__file__)
+    dst = src.with_suffix(".pth")
+    lines = src.read_text().splitlines()
+    code = "\n".join(lines[lines.index("# .PTH START") + 1 : lines.index("# .PTH END")])
+
+    print(f"Writing to {dst}")
+    # Only lines beginning with an import will be executed.
+    # https://docs.python.org/3/library/site.html
+    dst.write_text(f"import os; exec({code!r})\n")
