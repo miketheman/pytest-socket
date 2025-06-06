@@ -28,6 +28,7 @@ classifiers = [
     "Operating System :: OS Independent",
     "License :: OSI Approved :: MIT License",
 ]
+requires-poetry = ">=2.0.0,<3.0.0"
 
 [tool.poetry.dependencies]
 python = "^3.8"
