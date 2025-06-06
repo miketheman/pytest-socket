@@ -28,12 +28,13 @@ classifiers = [
     "Operating System :: OS Independent",
     "License :: OSI Approved :: MIT License",
 ]
+requires-poetry = ">=2.0.0,<3.0.0"
 
 [tool.poetry.dependencies]
 python = "^3.8"
 pytest = ">=7.0.0"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 coverage = "^7.6"
 pytest-httpbin = "^2.1.0"
 pytest-randomly = "^3.15.0"
