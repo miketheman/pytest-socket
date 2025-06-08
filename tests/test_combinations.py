@@ -23,7 +23,7 @@ def test_parametrize_with_socket_enabled_and_allow_hosts(testdir, httpbin):
             [
                 "https://google.com",
                 "https://amazon.com",
-                "https://microsoft.com",
+                "https://www.microsoft.com",
             ],
         )
         def test_domain(url, socket_enabled):
