@@ -151,4 +151,5 @@ question](https://stackoverflow.com/a/30064664), then converted into a
 pytest plugin by [\@miketheman](https://github.com/miketheman).
 
 ## Star History
+
 [![Star History Chart](https://api.star-history.com/svg?repos=miketheman/pytest-socket)](https://star-history.com/#miketheman/pytest-socket&Date)
