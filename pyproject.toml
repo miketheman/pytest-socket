@@ -42,7 +42,7 @@ coverage = { version = "^7.9", extras = ["toml"] }
 pytest-httpbin = "^2.1.0"
 pytest-randomly = "^3.15.0"
 requests = "^2.32.4"
-starlette = "^0.44.0"
+starlette = "^0.47.0"
 httpx = "^0.28.1"
 
 [project.entry-points.pytest11]
