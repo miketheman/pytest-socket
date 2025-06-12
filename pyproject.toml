@@ -38,7 +38,7 @@ include = [
 ]
 
 [tool.poetry.group.dev.dependencies]
-coverage = { version = "^7.6", extras = ["toml"] }
+coverage = { version = "^7.9", extras = ["toml"] }
 pytest-httpbin = "^2.1.0"
 pytest-randomly = "^3.15.0"
 requests = "^2.32.4"
