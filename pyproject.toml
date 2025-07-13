@@ -47,7 +47,7 @@ socket = 'pytest_socket'
 [tool.hatch.build.targets.sdist]
 include = [
     "LICENSE",
-    "README.md", 
+    "README.md",
     "tests/*",
     ".flake8",
 ]
