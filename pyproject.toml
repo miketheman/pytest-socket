@@ -44,6 +44,18 @@ dev = [
 [project.entry-points.pytest11]
 socket = 'pytest_socket'
 
+[tool.hatch.build.targets.sdist]
+include = [
+    "/LICENSE",
+    "/README.md", 
+    "/tests",
+    "/.flake8",
+    "/pytest_socket.py",
+]
+
+[tool.hatch.build.targets.wheel]
+force-include = { "pytest_socket.py" = "pytest_socket.py" }
+
 [tool.coverage.report]
 include = ["*pytest_socket*", "tests*"]
 
