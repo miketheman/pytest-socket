@@ -30,11 +30,13 @@ from [PyPI](https://pypi.python.org/pypi):
 pip install pytest-socket
 ```
 
-or add to your `pyproject.toml` for [poetry](https://python-poetry.org/):
+or add to your `pyproject.toml` for [uv](https://docs.astral.sh/uv/):
 
-```ini
-[tool.poetry.dev-dependencies]
-pytest-socket = "*"
+```toml
+[project.optional-dependencies]
+dev = [
+    "pytest-socket",
+]
 ```
 
 ## Usage

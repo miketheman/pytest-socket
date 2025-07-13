@@ -23,16 +23,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4.2.2
-    - name: Install poetry
-      run: pipx install poetry
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
       with:
-        python-version: ${{ matrix.python-version }}
-        cache: 'poetry'
+        enable-cache: true
+    - name: Set up Python ${{ matrix.python-version }}
+      run: uv python install ${{ matrix.python-version }}
     - name: Prepare project for development
-      run: poetry install
+      run: uv sync --extra dev
     - name: Test with pytest
       run: |
-        poetry run coverage run -m pytest
-        poetry run coverage report --show-missing
+        uv run coverage run -m pytest
+        uv run coverage report --show-missing
