@@ -53,10 +53,10 @@ include = [
 ]
 
 [tool.coverage.report]
-include = ["*pytest_socket*", "tests*"]
+include = ["src/pytest_socket/*", "tests/*"]
 
 [tool.isort]
-known_first_party = ['pytest_socket', 'conftest', 'test_socket']
+known_first_party = ['pytest_socket', 'conftest']
 # https://black.readthedocs.io/en/stable/guides/using_black_with_other_tools.html#profilegcm
 profile = "black"
 
