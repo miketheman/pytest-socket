@@ -46,15 +46,11 @@ socket = 'pytest_socket'
 
 [tool.hatch.build.targets.sdist]
 include = [
-    "/LICENSE",
-    "/README.md", 
-    "/tests",
-    "/.flake8",
-    "/pytest_socket.py",
+    "LICENSE",
+    "README.md", 
+    "tests/*",
+    ".flake8",
 ]
-
-[tool.hatch.build.targets.wheel]
-force-include = { "pytest_socket.py" = "pytest_socket.py" }
 
 [tool.coverage.report]
 include = ["*pytest_socket*", "tests*"]
@@ -67,7 +63,7 @@ profile = "black"
 [tool.vulture]
 ignore_decorators = ["@pytest.fixture"]
 ignore_names = ["pytest_*"]
-paths = ["pytest_socket.py"]
+paths = ["src/pytest_socket"]
 
 [build-system]
 requires = ["hatchling"]
