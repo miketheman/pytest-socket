@@ -4,6 +4,7 @@ version = "0.7.0"
 description = "Pytest Plugin to disable socket calls during tests"
 authors = [{ name = "Mike Fiedler", email = "miketheman@gmail.com" }]
 license = "MIT"
+license-files = ["LICENSE"]
 readme = "README.md"
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -22,6 +23,16 @@ classifiers = [
 requires-python = ">= 3.9"
 dependencies = ["pytest>=7.0.0"]
 
+[project.optional-dependencies]
+dev = [
+    "coverage[toml] >= 7.9",
+    "pytest-httpbin >= 2.1.0",
+    "pytest-randomly >= 3.15.0",
+    "requests >= 2.32.4",
+    "starlette >= 0.47.1",
+    "httpx >= 0.28.1",
+]
+
 [project.urls]
 "Homepage" = "https://pypi.org/project/pytest-socket/"
 "Repository" = "https://github.com/miketheman/pytest-socket"
@@ -29,38 +40,25 @@ dependencies = ["pytest>=7.0.0"]
 "Change Log" = "https://github.com/miketheman/pytest-socket/blob/main/CHANGELOG.md"
 "Funding" = "https://github.com/sponsors/miketheman"
 
-[tool.poetry]
-include = [
-    { path = "LICENSE", format = "sdist" },
-    { path = "README.md", format = "sdist" },
-    { path = "tests", format = "sdist" },
-    { path = ".flake8", format = "sdist" },
-]
-
-[tool.poetry.group.dev.dependencies]
-coverage = { version = "^7.9", extras = ["toml"] }
-pytest-httpbin = "^2.1.0"
-pytest-randomly = "^3.15.0"
-requests = "^2.32.4"
-starlette = "^0.47.1"
-httpx = "^0.28.1"
-
 [project.entry-points.pytest11]
 socket = 'pytest_socket'
 
+[tool.uv.build-backend]
+source-include = [".flake8", "tests/*"]
+
 [tool.coverage.report]
-include = ["*pytest_socket*", "tests*"]
+include = ["src/pytest_socket/*", "tests/*"]
 
 [tool.isort]
-known_first_party = ['pytest_socket', 'conftest', 'test_socket']
+known_first_party = ['pytest_socket', 'conftest']
 # https://black.readthedocs.io/en/stable/guides/using_black_with_other_tools.html#profilegcm
 profile = "black"
 
 [tool.vulture]
 ignore_decorators = ["@pytest.fixture"]
 ignore_names = ["pytest_*"]
-paths = ["pytest_socket.py"]
+paths = ["src/pytest_socket"]
 
 [build-system]
-requires = ["poetry-core>=2.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["uv_build>=0.7.20,<0.8.0"]
+build-backend = "uv_build"
