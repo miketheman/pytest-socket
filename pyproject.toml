@@ -4,6 +4,7 @@ version = "0.7.0"
 description = "Pytest Plugin to disable socket calls during tests"
 authors = [{ name = "Mike Fiedler", email = "miketheman@gmail.com" }]
 license = "MIT"
+license-files = ["LICENSE"]
 readme = "README.md"
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -39,18 +40,11 @@ dev = [
 "Change Log" = "https://github.com/miketheman/pytest-socket/blob/main/CHANGELOG.md"
 "Funding" = "https://github.com/sponsors/miketheman"
 
-
-
 [project.entry-points.pytest11]
 socket = 'pytest_socket'
 
-[tool.hatch.build.targets.sdist]
-include = [
-    "LICENSE",
-    "README.md",
-    "tests/*",
-    ".flake8",
-]
+[tool.uv.build-backend]
+source-include = [".flake8", "tests/*"]
 
 [tool.coverage.report]
 include = ["src/pytest_socket/*", "tests/*"]
@@ -66,5 +60,5 @@ ignore_names = ["pytest_*"]
 paths = ["src/pytest_socket"]
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["uv_build>=0.7.20,<0.8.0"]
+build-backend = "uv_build"
