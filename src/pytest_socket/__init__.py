@@ -11,12 +11,12 @@ _true_socket = socket.socket
 _true_connect = socket.socket.connect
 
 
-class SocketBlockedError(RuntimeError):
+class SocketBlockedError(BaseException):
     def __init__(self, *_args, **_kwargs):
         super().__init__("A test tried to use socket.socket.")
 
 
-class SocketConnectBlockedError(RuntimeError):
+class SocketConnectBlockedError(BaseException):
     def __init__(self, allowed, host, *_args, **_kwargs):
         if allowed:
             allowed = ",".join(allowed)
