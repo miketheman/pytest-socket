@@ -31,6 +31,8 @@ jobs:
       run: uv python install ${{ matrix.python-version }}
     - name: Prepare project for development
       run: uv sync --extra dev
+    - name: Check typing
+      run: uv run mypy src
     - name: Test with pytest
       run: |
         uv run coverage run -m pytest
