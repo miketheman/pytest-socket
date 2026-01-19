@@ -1,6 +1,5 @@
 def test_function_with_doctest(testdir):
-    testdir.makepyfile(
-        '''
+    testdir.makepyfile('''
         def my_sum(a, b):
             """Sum two values.
 
@@ -8,7 +7,6 @@ def test_function_with_doctest(testdir):
             2
             """
             return a + b
-        '''
-    )
+        ''')
     result = testdir.runpytest("--doctest-modules")
     result.assert_outcomes(passed=1)

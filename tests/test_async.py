@@ -4,8 +4,7 @@ from .conftest import unix_sockets_only
 
 @unix_sockets_only
 def test_starlette(testdir):
-    testdir.makepyfile(
-        """
+    testdir.makepyfile("""
         from pytest_socket import disable_socket
         from starlette.responses import HTMLResponse
         from starlette.testclient import TestClient
@@ -25,16 +24,14 @@ def test_starlette(testdir):
             client = TestClient(app)
             response = client.get('/')
             assert response.status_code == 200
-        """
-    )
+        """)
     result = testdir.runpytest("--disable-socket", "--allow-unix-socket")
     result.assert_outcomes(passed=1, skipped=0, failed=0)
 
 
 @unix_sockets_only
 def test_httpx_fails(testdir):
-    testdir.makepyfile(
-        """
+    testdir.makepyfile("""
         import pytest
         import httpx
 
@@ -46,7 +43,6 @@ def test_httpx_fails(testdir):
         async def test_httpx():
             async with httpx.AsyncClient() as client:
                 await client.get("http://www.example.com/")
-        """
-    )
+        """)
     result = testdir.runpytest("--disable-socket", "--allow-unix-socket")
     assert_socket_blocked(result)
