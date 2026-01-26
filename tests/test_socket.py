@@ -44,8 +44,7 @@ def test_socket_enabled_by_default(testdir, pyfile):
 
 
 def test_global_disable_via_fixture(testdir):
-    testdir.makepyfile(
-        """
+    testdir.makepyfile("""
         import pytest
         import pytest_socket
         import socket
@@ -56,8 +55,7 @@ def test_global_disable_via_fixture(testdir):
 
         def test_socket():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        """
-    )
+        """)
     result = testdir.runpytest()
     assert_socket_blocked(result)
 
@@ -98,42 +96,36 @@ def test_help_message(testdir):
 )
 def test_global_disable_via_config(testdir, pyfile):
     testdir.makepyfile(pyfile)
-    testdir.makeini(
-        """
+    testdir.makeini("""
         [pytest]
         addopts = --disable-socket
-        """
-    )
+        """)
     result = testdir.runpytest()
     assert_socket_blocked(result)
 
 
 def test_disable_socket_marker(testdir):
-    testdir.makepyfile(
-        """
+    testdir.makepyfile("""
         import pytest
         import socket
 
         @pytest.mark.disable_socket
         def test_socket():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        """
-    )
+        """)
     result = testdir.runpytest()
     assert_socket_blocked(result)
 
 
 def test_enable_socket_marker(testdir):
-    testdir.makepyfile(
-        """
+    testdir.makepyfile("""
         import pytest
         import socket
 
         @pytest.mark.enable_socket
         def test_socket():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        """
-    )
+        """)
     result = testdir.runpytest("--disable-socket")
     result.assert_outcomes(1, 0, 0)
     with pytest.raises(BaseException):
@@ -141,8 +133,7 @@ def test_enable_socket_marker(testdir):
 
 
 def test_urllib_succeeds_by_default(testdir):
-    testdir.makepyfile(
-        """
+    testdir.makepyfile("""
         try:
             from urllib.request import urlopen
         except ImportError:
@@ -150,8 +141,7 @@ def test_urllib_succeeds_by_default(testdir):
 
         def test_disable_socket_urllib():
             assert urlopen('https://http.codes/200').getcode() == 200
-        """
-    )
+        """)
     result = testdir.runpytest()
     result.assert_outcomes(1, 0, 0)
     with pytest.raises(BaseException):
@@ -159,8 +149,7 @@ def test_urllib_succeeds_by_default(testdir):
 
 
 def test_enabled_urllib_succeeds(testdir):
-    testdir.makepyfile(
-        """
+    testdir.makepyfile("""
         import pytest
         import pytest_socket
         try:
@@ -171,8 +160,7 @@ def test_enabled_urllib_succeeds(testdir):
         @pytest.mark.enable_socket
         def test_disable_socket_urllib():
             assert urlopen('https://http.codes/200').getcode() == 200
-        """
-    )
+        """)
     result = testdir.runpytest("--disable-socket")
     result.assert_outcomes(1, 0, 0)
     with pytest.raises(BaseException):
@@ -180,8 +168,7 @@ def test_enabled_urllib_succeeds(testdir):
 
 
 def test_disabled_urllib_fails(testdir):
-    testdir.makepyfile(
-        """
+    testdir.makepyfile("""
         import pytest
         try:
             from urllib.request import urlopen
@@ -191,15 +178,13 @@ def test_disabled_urllib_fails(testdir):
         @pytest.mark.disable_socket
         def test_disable_socket_urllib():
             assert urlopen('https://http.codes/200').getcode() == 200
-        """
-    )
+        """)
     result = testdir.runpytest()
     assert_socket_blocked(result)
 
 
 def test_double_call_does_nothing(testdir):
-    testdir.makepyfile(
-        """
+    testdir.makepyfile("""
         import pytest
         import pytest_socket
         import socket
@@ -219,8 +204,7 @@ def test_double_call_does_nothing(testdir):
             pytest_socket.disable_socket()
             pytest_socket.enable_socket()
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        """
-    )
+        """)
     result = testdir.runpytest()
     result.assert_outcomes(3, 0, 0)
     with pytest.raises(BaseException):
@@ -228,13 +212,11 @@ def test_double_call_does_nothing(testdir):
 
 
 def test_socket_enabled_fixture(testdir, socket_enabled):
-    testdir.makepyfile(
-        """
+    testdir.makepyfile("""
         import socket
         def test_socket_enabled(socket_enabled):
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        """
-    )
+        """)
     result = testdir.runpytest()
     result.assert_outcomes(1, 0, 0)
     with pytest.raises(BaseException):
@@ -242,8 +224,7 @@ def test_socket_enabled_fixture(testdir, socket_enabled):
 
 
 def test_mix_and_match(testdir, socket_enabled):
-    testdir.makepyfile(
-        """
+    testdir.makepyfile("""
         import socket
 
         def test_socket1():
@@ -252,15 +233,13 @@ def test_mix_and_match(testdir, socket_enabled):
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         def test_socket2():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        """
-    )
+        """)
     result = testdir.runpytest("--disable-socket")
     result.assert_outcomes(1, 0, 2)
 
 
 def test_socket_subclass_is_still_blocked(testdir):
-    testdir.makepyfile(
-        """
+    testdir.makepyfile("""
         import pytest
         import pytest_socket
         import socket
@@ -272,37 +251,32 @@ def test_socket_subclass_is_still_blocked(testdir):
                 pass
 
             MySocket(socket.AF_INET, socket.SOCK_STREAM)
-        """
-    )
+        """)
     result = testdir.runpytest()
     assert_socket_blocked(result)
 
 
 @unix_sockets_only
 def test_unix_domain_sockets_blocked_with_disable_socket(testdir):
-    testdir.makepyfile(
-        """
+    testdir.makepyfile("""
         import socket
 
         def test_unix_socket():
             socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        """
-    )
+        """)
     result = testdir.runpytest("--disable-socket")
     assert_socket_blocked(result)
 
 
 @unix_sockets_only
 def test_enabling_unix_domain_sockets_with_disable_socket(testdir):
-    testdir.makepyfile(
-        """
+    testdir.makepyfile("""
         import socket
 
         def test_inet():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         def test_unix_socket():
             socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        """
-    )
+        """)
     result = testdir.runpytest("--disable-socket", "--allow-unix-socket")
     result.assert_outcomes(passed=1, skipped=0, failed=1)
