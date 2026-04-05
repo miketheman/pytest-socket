@@ -81,12 +81,7 @@ _STASH_KEY = pytest.StashKey[_PytestSocketConfig]()
 
 
 def _is_unix_socket(family) -> bool:
-    try:
-        is_unix_socket = family == socket.AF_UNIX
-    except AttributeError:
-        # AF_UNIX not supported on Windows https://bugs.python.org/issue33408
-        is_unix_socket = False
-    return is_unix_socket
+    return hasattr(socket, "AF_UNIX") and family == socket.AF_UNIX
 
 
 def disable_socket(allow_unix_socket=False):
