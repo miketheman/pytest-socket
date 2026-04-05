@@ -3,8 +3,10 @@
 
 name: Python Tests
 
-# Trigger the workflow on push or pull request
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -15,10 +17,6 @@ permissions: {}
 jobs:
   build:
     name: Test Python ${{ matrix.python-version }} on ${{ matrix.os }}
-    # We want to run on external PRs, but not on our own internal PRs as they'll be run
-    # by the push to the branch.
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != 'miketheman/pytest-socket'
-
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
