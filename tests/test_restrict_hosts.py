@@ -53,7 +53,7 @@ def assert_host_blocked(result, host):
 
 
 @pytest.fixture
-def assert_connect(httpbin, testdir):
+def assert_connect(httpbin, pytester):
     def assert_socket_connect(should_pass, **kwargs):
         # get the name of the calling function
         test_name = inspect.stack()[1][3]
@@ -71,17 +71,17 @@ def assert_connect(httpbin, testdir):
                 hosts = '","'.join(mark_arg)
                 mark = f'@pytest.mark.allow_hosts(["{hosts}"])'
         code = code_template.format(host, httpbin.port, test_name, mark)
-        testdir.makepyfile(code)
+        pytester.makepyfile(code)
 
         if cli_arg:
-            result = testdir.runpytest(f"--allow-hosts={cli_arg}")
+            result = pytester.runpytest(f"--allow-hosts={cli_arg}")
         else:
-            result = testdir.runpytest()
+            result = pytester.runpytest()
 
         if should_pass:
-            result.assert_outcomes(1, 0, 0)
+            result.assert_outcomes(passed=1)
         else:
-            result.assert_outcomes(0, 0, 1)
+            result.assert_outcomes(failed=1)
             assert_host_blocked(result, host)
 
         return result
@@ -108,8 +108,8 @@ def getaddrinfo_hosts(monkeypatch):
     return hosts
 
 
-def test_help_message(testdir):
-    result = testdir.runpytest(
+def test_help_message(pytester):
+    result = pytester.runpytest(
         "--help",
     )
     result.stdout.fnmatch_lines(
@@ -122,8 +122,8 @@ def test_help_message(testdir):
     )
 
 
-def test_marker_help_message(testdir):
-    result = testdir.runpytest(
+def test_marker_help_message(pytester):
+    result = pytester.runpytest(
         "--markers",
     )
     result.stdout.fnmatch_lines(
@@ -237,39 +237,39 @@ def test_single_mark_arg_urlopen_enabled(assert_connect):
     )
 
 
-def test_global_restrict_via_config_fail(testdir):
-    testdir.makepyfile("""
+def test_global_restrict_via_config_fail(pytester):
+    pytester.makepyfile("""
         import socket
 
         def test_global_restrict_via_config_fail():
             socket.socket().connect(('127.0.0.1', 80))
         """)
-    testdir.makeini("""
+    pytester.makeini("""
         [pytest]
         addopts = --allow-hosts=2.2.2.2
         """)
-    result = testdir.runpytest()
-    result.assert_outcomes(0, 0, 1)
+    result = pytester.runpytest()
+    result.assert_outcomes(failed=1)
     assert_host_blocked(result, "127.0.0.1")
 
 
-def test_global_restrict_via_config_pass(testdir, httpbin):
-    testdir.makepyfile(f"""
+def test_global_restrict_via_config_pass(pytester, httpbin):
+    pytester.makepyfile(f"""
         import socket
 
         def test_global_restrict_via_config_pass():
             socket.socket().connect(('{httpbin.host}', {httpbin.port}))
         """)
-    testdir.makeini(f"""
+    pytester.makeini(f"""
         [pytest]
         addopts = --allow-hosts={httpbin.host}
         """)
-    result = testdir.runpytest()
-    result.assert_outcomes(1, 0, 0)
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
 
 
-def test_test_isolation(testdir, httpbin):
-    testdir.makepyfile(f"""
+def test_test_isolation(pytester, httpbin):
+    pytester.makepyfile(f"""
         import pytest
         import socket
 
@@ -284,13 +284,13 @@ def test_test_isolation(testdir, httpbin):
         def test_pass_2():
             socket.socket().connect(('{httpbin.host}', {httpbin.port}))
         """)
-    result = testdir.runpytest()
-    result.assert_outcomes(2, 0, 1)
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=2, failed=1)
     assert_host_blocked(result, httpbin.host)
 
 
-def test_conflicting_cli_vs_marks(testdir, httpbin):
-    testdir.makepyfile(f"""
+def test_conflicting_cli_vs_marks(pytester, httpbin):
+    pytester.makepyfile(f"""
         import pytest
         import socket
 
@@ -305,8 +305,8 @@ def test_conflicting_cli_vs_marks(testdir, httpbin):
         def test_fail_2():
             socket.socket().connect(('2.2.2.2', {httpbin.port}))
         """)
-    result = testdir.runpytest("--allow-hosts=1.2.3.4")
-    result.assert_outcomes(1, 0, 2)
+    result = pytester.runpytest("--allow-hosts=1.2.3.4")
+    result.assert_outcomes(passed=1, failed=2)
     assert_host_blocked(result, "2.2.2.2")
     assert_host_blocked(result, httpbin.host)
 
@@ -341,10 +341,10 @@ def test_normalize_allowed_hosts_cache(getaddrinfo_hosts):
     assert getaddrinfo_hosts == []
 
 
-def test_name_resolution_cached(testdir, getaddrinfo_hosts):
+def test_name_resolution_cached(pytester, getaddrinfo_hosts):
     """pytest-socket only resolves each allowed name once."""
 
-    testdir.makepyfile("""
+    pytester.makepyfile("""
         import pytest
         import socket
 
@@ -362,7 +362,7 @@ def test_name_resolution_cached(testdir, getaddrinfo_hosts):
             ...
         """)
 
-    hooks = testdir.inline_run("--allow-hosts=name.internal,name.internal")
+    hooks = pytester.inline_run("--allow-hosts=name.internal,name.internal")
     [result] = hooks.getcalls("pytest_sessionfinish")
     assert result.session.testsfailed == 0
 

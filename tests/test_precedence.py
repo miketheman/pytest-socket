@@ -4,19 +4,19 @@ configuration combinations"""
 from .common import assert_socket_blocked
 
 
-def test_disable_via_fixture(testdir):
-    testdir.makepyfile("""
+def test_disable_via_fixture(pytester):
+    pytester.makepyfile("""
         import socket
 
         def test_socket(socket_disabled):
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         """)
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     assert_socket_blocked(result)
 
 
-def test_disable_via_marker(testdir):
-    testdir.makepyfile("""
+def test_disable_via_marker(pytester):
+    pytester.makepyfile("""
         import socket
         import pytest
 
@@ -24,23 +24,23 @@ def test_disable_via_marker(testdir):
         def test_socket():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         """)
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     assert_socket_blocked(result)
 
 
-def test_global_disable_via_cli_flag(testdir):
-    testdir.makepyfile("""
+def test_global_disable_via_cli_flag(pytester):
+    pytester.makepyfile("""
         import socket
 
         def test_socket():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         """)
-    result = testdir.runpytest("--disable-socket")
+    result = pytester.runpytest("--disable-socket")
     assert_socket_blocked(result)
 
 
-def test_force_enable_socket_via_cli_flag(testdir):
-    testdir.makepyfile("""
+def test_force_enable_socket_via_cli_flag(pytester):
+    pytester.makepyfile("""
         import socket
         import pytest
 
@@ -48,38 +48,38 @@ def test_force_enable_socket_via_cli_flag(testdir):
         def test_socket():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         """)
-    result = testdir.runpytest("--force-enable-socket")
+    result = pytester.runpytest("--force-enable-socket")
     result.assert_outcomes(passed=1)
 
 
-def test_force_enable_cli_flag_precedence(testdir):
-    testdir.makepyfile("""
+def test_force_enable_cli_flag_precedence(pytester):
+    pytester.makepyfile("""
         import socket
 
         def test_socket():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         """)
-    result = testdir.runpytest("--disable-socket", "--force-enable-socket")
+    result = pytester.runpytest("--disable-socket", "--force-enable-socket")
     result.assert_outcomes(passed=1)
 
 
-def test_global_disable_via_config(testdir):
-    testdir.makepyfile("""
+def test_global_disable_via_config(pytester):
+    pytester.makepyfile("""
         import socket
 
         def test_socket():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         """)
-    testdir.makeini("""
+    pytester.makeini("""
         [pytest]
         addopts = --disable-socket
         """)
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     assert_socket_blocked(result)
 
 
-def test_enable_via_fixture(testdir):
-    testdir.makepyfile("""
+def test_enable_via_fixture(pytester):
+    pytester.makepyfile("""
         import socket
 
         def test_socket(socket_enabled):
@@ -88,12 +88,12 @@ def test_enable_via_fixture(testdir):
         def test_socket_disabled():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         """)
-    result = testdir.runpytest("--disable-socket")
+    result = pytester.runpytest("--disable-socket")
     assert_socket_blocked(result, passed=1, failed=1)
 
 
-def test_enable_via_marker(testdir):
-    testdir.makepyfile("""
+def test_enable_via_marker(pytester):
+    pytester.makepyfile("""
         import socket
         import pytest
 
@@ -104,12 +104,12 @@ def test_enable_via_marker(testdir):
         def test_socket_disabled():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         """)
-    result = testdir.runpytest("--disable-socket")
+    result = pytester.runpytest("--disable-socket")
     assert_socket_blocked(result, passed=1, failed=1)
 
 
-def test_enable_marker_for_test_class(testdir):
-    testdir.makepyfile("""
+def test_enable_marker_for_test_class(pytester):
+    pytester.makepyfile("""
         import socket
         import pytest
 
@@ -121,13 +121,13 @@ def test_enable_marker_for_test_class(testdir):
         def test_socket_disabled():
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         """)
-    result = testdir.runpytest("--disable-socket")
+    result = pytester.runpytest("--disable-socket")
     assert_socket_blocked(result, passed=1, failed=1)
 
 
-def test_global_disable_and_allow_host(testdir, httpbin):
+def test_global_disable_and_allow_host(pytester, httpbin):
     """Disable socket globally, but allow a specific host"""
-    testdir.makepyfile(f"""
+    pytester.makepyfile(f"""
         from urllib.request import urlopen
 
         def test_urlopen():
@@ -136,5 +136,5 @@ def test_global_disable_and_allow_host(testdir, httpbin):
         def test_urlopen_disabled():
             assert urlopen("https://google.com/")
         """)
-    result = testdir.runpytest("--disable-socket", f"--allow-hosts={httpbin.host}")
+    result = pytester.runpytest("--disable-socket", f"--allow-hosts={httpbin.host}")
     assert_socket_blocked(result, passed=1, failed=1)

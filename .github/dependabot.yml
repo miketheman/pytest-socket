@@ -6,11 +6,14 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      # Check for updates to GitHub Actions every weekday
-      interval: "daily"
+      interval: "weekly"
+    cooldown:
+      default-days: 7
 
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
-      # Check for updates to GitHub Actions every weekday
-      interval: "daily"
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+      semver-major-days: 30

@@ -12,15 +12,16 @@ classifiers = [
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Testing",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: Implementation :: CPython",
     "Operating System :: OS Independent",
     "License :: OSI Approved :: MIT License",
 ]
-requires-python = ">= 3.9"
+requires-python = ">= 3.10"
 dependencies = ["pytest>=7.0.0"]
 
 [project.optional-dependencies]
