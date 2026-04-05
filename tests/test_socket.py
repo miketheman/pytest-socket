@@ -38,7 +38,7 @@ PYFILE_SOCKET_NO_ARGS = """
 def test_socket_enabled_by_default(testdir, pyfile):
     testdir.makepyfile(pyfile)
     result = testdir.runpytest()
-    result.assert_outcomes(1, 0, 0)
+    result.assert_outcomes(passed=1)
     with pytest.raises(BaseException):
         assert_socket_blocked(result)
 
@@ -127,7 +127,7 @@ def test_enable_socket_marker(testdir):
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         """)
     result = testdir.runpytest("--disable-socket")
-    result.assert_outcomes(1, 0, 0)
+    result.assert_outcomes(passed=1)
     with pytest.raises(BaseException):
         assert_socket_blocked(result)
 
@@ -140,7 +140,7 @@ def test_urllib_succeeds_by_default(testdir):
             assert urlopen('https://http.codes/200').getcode() == 200
         """)
     result = testdir.runpytest()
-    result.assert_outcomes(1, 0, 0)
+    result.assert_outcomes(passed=1)
     with pytest.raises(BaseException):
         assert_socket_blocked(result)
 
@@ -156,7 +156,7 @@ def test_enabled_urllib_succeeds(testdir):
             assert urlopen('https://http.codes/200').getcode() == 200
         """)
     result = testdir.runpytest("--disable-socket")
-    result.assert_outcomes(1, 0, 0)
+    result.assert_outcomes(passed=1)
     with pytest.raises(BaseException):
         assert_socket_blocked(result)
 
@@ -197,7 +197,7 @@ def test_double_call_does_nothing(testdir):
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         """)
     result = testdir.runpytest()
-    result.assert_outcomes(3, 0, 0)
+    result.assert_outcomes(passed=3)
     with pytest.raises(BaseException):
         assert_socket_blocked(result)
 
@@ -209,7 +209,7 @@ def test_socket_enabled_fixture(testdir, socket_enabled):
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         """)
     result = testdir.runpytest()
-    result.assert_outcomes(1, 0, 0)
+    result.assert_outcomes(passed=1)
     with pytest.raises(BaseException):
         assert_socket_blocked(result)
 
@@ -226,7 +226,7 @@ def test_mix_and_match(testdir, socket_enabled):
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         """)
     result = testdir.runpytest("--disable-socket")
-    result.assert_outcomes(1, 0, 2)
+    result.assert_outcomes(passed=1, failed=2)
 
 
 def test_socket_subclass_is_still_blocked(testdir):
