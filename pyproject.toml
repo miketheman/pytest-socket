@@ -20,6 +20,7 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
     "Operating System :: OS Independent",
     "License :: OSI Approved :: MIT License",
+    "Typing :: Typed",
 ]
 requires-python = ">= 3.10"
 dependencies = ["pytest>=7.0.0"]
@@ -32,6 +33,7 @@ dev = [
     "requests >= 2.32.4",
     "starlette >= 0.47.1",
     "httpx >= 0.28.1",
+    "mypy >= 1.20",
 ]
 
 [project.urls]
@@ -54,6 +56,9 @@ include = ["src/pytest_socket/*", "tests/*"]
 known_first_party = ['pytest_socket', 'conftest']
 # https://black.readthedocs.io/en/stable/guides/using_black_with_other_tools.html#profilegcm
 profile = "black"
+
+[tool.mypy]
+strict = true
 
 [tool.vulture]
 ignore_decorators = ["@pytest.fixture"]

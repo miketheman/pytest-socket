@@ -41,6 +41,8 @@ jobs:
       run: uv python install '${{ matrix.python-version }}' # zizmor: ignore[template-injection]
     - name: Prepare project for development
       run: uv sync
+    - name: Check types
+      run: uv run mypy src
     - name: Test with pytest
       run: |
         uv run coverage run -m pytest
