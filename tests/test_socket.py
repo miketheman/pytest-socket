@@ -134,10 +134,7 @@ def test_enable_socket_marker(testdir):
 
 def test_urllib_succeeds_by_default(testdir):
     testdir.makepyfile("""
-        try:
-            from urllib.request import urlopen
-        except ImportError:
-            from urllib2 import urlopen
+        from urllib.request import urlopen
 
         def test_disable_socket_urllib():
             assert urlopen('https://http.codes/200').getcode() == 200
@@ -152,10 +149,7 @@ def test_enabled_urllib_succeeds(testdir):
     testdir.makepyfile("""
         import pytest
         import pytest_socket
-        try:
-            from urllib.request import urlopen
-        except ImportError:
-            from urllib2 import urlopen
+        from urllib.request import urlopen
 
         @pytest.mark.enable_socket
         def test_disable_socket_urllib():
@@ -170,10 +164,7 @@ def test_enabled_urllib_succeeds(testdir):
 def test_disabled_urllib_fails(testdir):
     testdir.makepyfile("""
         import pytest
-        try:
-            from urllib.request import urlopen
-        except ImportError:
-            from urllib2 import urlopen
+        from urllib.request import urlopen
 
         @pytest.mark.disable_socket
         def test_disable_socket_urllib():
