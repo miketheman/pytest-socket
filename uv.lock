@@ -689,7 +689,7 @@ dependencies = [
     { name = "pytest" },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
     { name = "coverage", extra = ["toml"] },
     { name = "httpx" },
@@ -700,16 +700,17 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "coverage", extras = ["toml"], marker = "extra == 'dev'", specifier = ">=7.9" },
-    { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.28.1" },
-    { name = "pytest", specifier = ">=7.0.0" },
-    { name = "pytest-httpbin", marker = "extra == 'dev'", specifier = ">=2.1.0" },
-    { name = "pytest-randomly", marker = "extra == 'dev'", specifier = ">=3.15.0" },
-    { name = "requests", marker = "extra == 'dev'", specifier = ">=2.32.4" },
-    { name = "starlette", marker = "extra == 'dev'", specifier = ">=0.47.1" },
+requires-dist = [{ name = "pytest", specifier = ">=7.0.0" }]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "coverage", extras = ["toml"], specifier = ">=7.9" },
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "pytest-httpbin", specifier = ">=2.1.0" },
+    { name = "pytest-randomly", specifier = ">=3.15.0" },
+    { name = "requests", specifier = ">=2.32.4" },
+    { name = "starlette", specifier = ">=0.47.1" },
 ]
-provides-extras = ["dev"]
 
 [[package]]
 name = "pyyaml"

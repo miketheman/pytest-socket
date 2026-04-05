@@ -17,7 +17,7 @@ $(INSTALL_STAMP): pyproject.toml uv.lock
 ifndef UV
 	$(error "uv is not available, please install it first.")
 endif
-	@uv sync --extra dev
+	@uv sync
 	@touch $(INSTALL_STAMP)
 
 test: $(INSTALL_STAMP)
