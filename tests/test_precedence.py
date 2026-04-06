@@ -125,16 +125,16 @@ def test_enable_marker_for_test_class(pytester):
     assert_socket_blocked(result, passed=1, failed=1)
 
 
-def test_global_disable_and_allow_host(pytester, httpbin):
+def test_global_disable_and_allow_host(pytester, httpserver):
     """Disable socket globally, but allow a specific host"""
     pytester.makepyfile(f"""
         from urllib.request import urlopen
 
         def test_urlopen():
-            assert urlopen("{httpbin.url}/")
+            assert urlopen("{httpserver.url}/")
 
         def test_urlopen_disabled():
             assert urlopen("https://google.com/")
         """)
-    result = pytester.runpytest("--disable-socket", f"--allow-hosts={httpbin.host}")
+    result = pytester.runpytest("--disable-socket", f"--allow-hosts={httpserver.host}")
     assert_socket_blocked(result, passed=1, failed=1)

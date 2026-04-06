@@ -3,40 +3,36 @@
 from .conftest import unix_sockets_only
 
 
-def test_parametrize_with_socket_enabled_and_allow_hosts(pytester, httpbin):
+def test_parametrize_with_socket_enabled_and_allow_hosts(pytester, httpserver):
     """This is a complex test that demonstrates the use of `parametrize`,
     `enable_socket` fixture, allow_hosts CLI flag.
-
-    TODO: This test makes real http calls. httpbin only provides a single IP.
-    Is there a better way to express multiple **working** IPs?
 
     From: https://github.com/miketheman/pytest-socket/issues/56
     """
     pytester.makepyfile(f"""
+        import socket
         import pytest
-        import requests
+        from urllib.request import urlopen
 
 
         @pytest.mark.parametrize(
-            "url",
-            [
-                "https://google.com",
-                "https://amazon.com",
-                "https://www.microsoft.com",
-            ],
+            "host",
+            ["google.com", "www.amazon.com", "www.microsoft.com"],
         )
-        def test_domain(url, socket_enabled):
-            requests.get(url)
+        def test_domain(host, socket_enabled):
+            # Just verify socket creation and connect aren't blocked
+            sock = socket.create_connection((host, 443), timeout=5)
+            sock.close()
 
         def test_localhost_works():
-            requests.get("{httpbin.url}/")
+            urlopen("{httpserver.url}/")
 
         def test_remote_not_allowed_fails():
-            requests.get("http://172.1.1.1/")
+            urlopen("http://172.1.1.1/")
         """)
     pytester.makeini(f"""
         [pytest]
-        addopts = --disable-socket --allow-hosts={httpbin.host}
+        addopts = --disable-socket --allow-hosts={httpserver.host}
         """)
     result = pytester.runpytest()
     result.assert_outcomes(passed=4, failed=1)
@@ -47,7 +43,7 @@ def test_parametrize_with_socket_enabled_and_allow_hosts(pytester, httpbin):
 
 
 @unix_sockets_only
-def test_combine_unix_and_allow_hosts(pytester, httpbin):
+def test_combine_unix_and_allow_hosts(pytester, httpserver):
     """Test combination of disable, allow-unix and allow-hosts.
 
     From https://github.com/miketheman/pytest-socket/issues/78
@@ -66,9 +62,9 @@ def test_combine_unix_and_allow_hosts(pytester, httpbin):
 
         def test_inet_connect():
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.connect(('{httpbin.host}', {httpbin.port}))
+            sock.connect(('{httpserver.host}', {httpserver.port}))
         """)
     result = pytester.runpytest(
-        "--disable-socket", "--allow-unix-socket", f"--allow-hosts={httpbin.host}"
+        "--disable-socket", "--allow-unix-socket", f"--allow-hosts={httpserver.host}"
     )
     result.assert_outcomes(passed=2)
