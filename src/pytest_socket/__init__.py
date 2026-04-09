@@ -3,6 +3,7 @@ from __future__ import annotations
 import ipaddress
 import itertools
 import socket
+import warnings
 from collections import defaultdict
 from collections.abc import Iterator
 from dataclasses import dataclass, field
@@ -16,7 +17,9 @@ _true_connect = socket.socket.connect
 
 class SocketBlockedError(RuntimeError):
     def __init__(self, *_args: Any, **_kwargs: Any) -> None:
-        super().__init__("A test tried to use socket.socket.")
+        msg = "A test tried to use socket.socket."
+        warnings.warn(msg, stacklevel=2)
+        super().__init__(msg)
 
 
 class SocketConnectBlockedError(RuntimeError):
@@ -28,10 +31,12 @@ class SocketConnectBlockedError(RuntimeError):
         **_kwargs: Any,
     ) -> None:
         allowed_str = ",".join(allowed)
-        super().__init__(
+        msg = (
             "A test tried to use socket.socket.connect() "
             f'with host "{host}" (allowed: "{allowed_str}").'
         )
+        warnings.warn(msg, stacklevel=2)
+        super().__init__(msg)
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
