@@ -14,6 +14,8 @@ import pytest
 _true_socket = socket.socket
 _true_connect = socket.socket.connect
 
+_IPNetwork = ipaddress.IPv4Network | ipaddress.IPv6Network
+
 
 class SocketBlockedError(RuntimeError):
     def __init__(self, *_args: Any, **_kwargs: Any) -> None:
@@ -266,6 +268,29 @@ def normalize_allowed_hosts(
     return ip_hosts
 
 
+def _partition_allowed(
+    allowed: list[str],
+) -> tuple[list[str], list[_IPNetwork]]:
+    """Split an allow-list into plain hosts and CIDR networks.
+
+    Entries containing ``/`` are parsed as networks. Invalid CIDR entries
+    fall through to the plain-host path so an existing test failure mode
+    (block + meaningful error) is preserved.
+    """
+    plain_hosts: list[str] = []
+    networks: list[_IPNetwork] = []
+    for entry in allowed:
+        candidate = entry.strip()
+        if "/" in candidate:
+            try:
+                networks.append(ipaddress.ip_network(candidate, strict=False))
+                continue
+            except ValueError:
+                pass
+        plain_hosts.append(candidate)
+    return plain_hosts, networks
+
+
 def socket_allow_hosts(
     allowed: str | list[str] | None = None,
     allow_unix_socket: bool = False,
@@ -278,7 +303,9 @@ def socket_allow_hosts(
     if not isinstance(allowed, list):
         return
 
-    allowed_ip_hosts_by_host = normalize_allowed_hosts(allowed, resolution_cache)
+    plain_hosts, networks = _partition_allowed(allowed)
+
+    allowed_ip_hosts_by_host = normalize_allowed_hosts(plain_hosts, resolution_cache)
     allowed_ip_hosts_and_hostnames = set(
         itertools.chain(*allowed_ip_hosts_by_host.values())
     ) | set(allowed_ip_hosts_by_host.keys())
@@ -291,6 +318,7 @@ def socket_allow_hosts(
             )
             for host, normalized in allowed_ip_hosts_by_host.items()
         ]
+        + [str(net) for net in networks]
     )
 
     def guarded_connect(inst: socket.socket, *args: Any) -> None:
@@ -299,6 +327,11 @@ def socket_allow_hosts(
             _is_unix_socket(inst.family) and allow_unix_socket
         ):
             return _true_connect(inst, *args)
+
+        if host and networks and is_ipaddress(host):
+            ip = ipaddress.ip_address(host)
+            if any(ip in net for net in networks):
+                return _true_connect(inst, *args)
 
         raise SocketConnectBlockedError(allowed_list, host)
 

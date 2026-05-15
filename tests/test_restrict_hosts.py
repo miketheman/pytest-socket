@@ -341,6 +341,148 @@ def test_normalize_allowed_hosts_cache(getaddrinfo_hosts):
     assert getaddrinfo_hosts == []
 
 
+def test_cidr_marker_permits_in_block_ip(pytester, httpserver):
+    """A test marked with a CIDR can connect to any IP inside that block."""
+    pytester.makepyfile(f"""
+        import pytest
+        import socket
+
+        @pytest.mark.allow_hosts('127.0.0.0/8')
+        def test_in_block():
+            socket.socket().connect(('{httpserver.host}', {httpserver.port}))
+        """)
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_cidr_marker_blocks_out_of_block_ip(pytester, httpserver):
+    """A CIDR marker still blocks IPs outside the block."""
+    pytester.makepyfile(f"""
+        import pytest
+        import socket
+
+        @pytest.mark.allow_hosts('127.0.0.0/8')
+        def test_out_of_block():
+            socket.socket().connect(('2.2.2.2', {httpserver.port}))
+        """)
+    result = pytester.runpytest()
+    result.assert_outcomes(failed=1)
+    assert_host_blocked(result, "2.2.2.2")
+
+
+def test_cidr_via_cli_flag(pytester, httpserver):
+    """CIDR works the same when passed via --allow-hosts CSV."""
+    pytester.makepyfile(f"""
+        import socket
+
+        def test_in_block():
+            socket.socket().connect(('{httpserver.host}', {httpserver.port}))
+
+        def test_out_of_block():
+            socket.socket().connect(('2.2.2.2', {httpserver.port}))
+        """)
+    result = pytester.runpytest("--allow-hosts=127.0.0.0/8")
+    result.assert_outcomes(passed=1, failed=1)
+    assert_host_blocked(result, "2.2.2.2")
+
+
+def test_mixed_cidr_ip_and_hostname_allowlist(pytester, httpserver):
+    """CIDR and literal-IP entries coexist in one allowlist.
+
+    Hostname coexistence is exercised by ``test_normalize_allowed_hosts`` and
+    ``test_name_resolution_cached``; this test focuses on the new CIDR path
+    sharing the allowlist with a literal IP (the live ``httpserver``) and
+    confirms that an unrelated host is still blocked.
+    """
+    pytester.makepyfile(f"""
+        import pytest
+        import socket
+
+        @pytest.mark.allow_hosts(['10.0.0.0/8', '{httpserver.host}'])
+        def test_literal_ip_path():
+            socket.socket().connect(('{httpserver.host}', {httpserver.port}))
+
+        @pytest.mark.allow_hosts(['10.0.0.0/8', '{httpserver.host}'])
+        def test_cidr_path_blocks_outsider():
+            socket.socket().connect(('2.2.2.2', {httpserver.port}))
+        """)
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1, failed=1)
+    assert_host_blocked(result, "2.2.2.2")
+
+
+def test_ipv6_cidr(pytester):
+    """IPv6 CIDR allow-list permits in-block addresses and blocks others."""
+    pytester.makepyfile("""
+        import pytest
+        import socket
+
+        @pytest.mark.allow_hosts('::1/128')
+        def test_in_block():
+            # ::1 is in the /128 block — guard should permit; real connect
+            # may still error at the OS level, but not as SocketConnectBlockedError.
+            try:
+                socket.socket(socket.AF_INET6).connect(('::1', 1))
+            except OSError as exc:
+                # Anything except SocketConnectBlockedError is fine here.
+                import pytest_socket
+                assert not isinstance(exc, pytest_socket.SocketConnectBlockedError)
+
+        @pytest.mark.allow_hosts('::1/128')
+        def test_out_of_block():
+            socket.socket(socket.AF_INET6).connect(('2001:db8::1', 1))
+        """)
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1, failed=1)
+    assert_host_blocked(result, "2001:db8::1")
+
+
+def test_hostname_arg_with_cidr_only_allowlist(pytester):
+    """A connect call using a hostname (not an IP) under a CIDR-only allowlist
+    raises SocketConnectBlockedError — not a ValueError from ipaddress.
+
+    This is the failure mode that prevented merging the original CIDR PR (#185).
+    """
+    pytester.makepyfile("""
+        import socket
+
+        def test_hostname_connect():
+            # 'example.invalid' will never resolve to an IP; the guard must
+            # block it cleanly rather than crashing when it tries to parse
+            # the hostname as an IP for CIDR membership.
+            socket.socket().connect(('example.invalid', 80))
+        """)
+    result = pytester.runpytest("--allow-hosts=10.0.0.0/8")
+    result.assert_outcomes(failed=1)
+    assert_host_blocked(result, "example.invalid")
+
+
+def test_cidr_appears_in_blocked_error_message(pytester):
+    """The 'allowed:' hint in the blocked-connect message includes CIDR strings."""
+    pytester.makepyfile("""
+        import socket
+
+        def test_blocked():
+            socket.socket().connect(('2.2.2.2', 80))
+        """)
+    result = pytester.runpytest("--allow-hosts=10.0.0.0/8,192.168.0.0/16")
+    result.assert_outcomes(failed=1)
+    result.stdout.fnmatch_lines('*allowed: "10.0.0.0/8,192.168.0.0/16"*')
+
+
+def test_malformed_cidr_does_not_crash(pytester):
+    """A malformed CIDR entry is treated as a (non-resolving) host, not a crash."""
+    pytester.makepyfile("""
+        import socket
+
+        def test_blocked():
+            socket.socket().connect(('2.2.2.2', 80))
+        """)
+    result = pytester.runpytest("--allow-hosts=10.0.0.0/notanumber")
+    result.assert_outcomes(failed=1)
+    assert_host_blocked(result, "2.2.2.2")
+
+
 def test_name_resolution_cached(pytester, getaddrinfo_hosts):
     """pytest-socket only resolves each allowed name once."""
 
