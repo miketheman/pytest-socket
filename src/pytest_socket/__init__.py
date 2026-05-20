@@ -13,13 +13,19 @@ import pytest
 
 _true_socket = socket.socket
 _true_connect = socket.socket.connect
+_true_getaddrinfo = socket.getaddrinfo
+_true_gethostbyname = socket.gethostbyname
 
 _IPNetwork = ipaddress.IPv4Network | ipaddress.IPv6Network
 
 
 class SocketBlockedError(RuntimeError):
-    def __init__(self, *_args: Any, **_kwargs: Any) -> None:
-        msg = "A test tried to use socket.socket."
+    def __init__(
+        self,
+        msg: str = "A test tried to use socket.socket.",
+        *_args: Any,
+        **_kwargs: Any,
+    ) -> None:
         warnings.warn(msg, stacklevel=2)
         super().__init__(msg)
 
@@ -100,6 +106,14 @@ def _is_unix_socket(family: int) -> bool:
     return hasattr(socket, "AF_UNIX") and family == socket.AF_UNIX
 
 
+def _guarded_getaddrinfo(*_args: Any, **_kwargs: Any) -> Any:
+    raise SocketBlockedError("A test tried to use socket.getaddrinfo.")
+
+
+def _guarded_gethostbyname(*_args: Any, **_kwargs: Any) -> Any:
+    raise SocketBlockedError("A test tried to use socket.gethostbyname.")
+
+
 def disable_socket(allow_unix_socket: bool = False) -> None:
     """disable socket.socket to disable the Internet. useful in testing."""
 
@@ -119,11 +133,17 @@ def disable_socket(allow_unix_socket: bool = False) -> None:
             raise SocketBlockedError()
 
     socket.socket = GuardedSocket  # type: ignore[misc]
+    socket.getaddrinfo = _guarded_getaddrinfo
+    socket.gethostbyname = _guarded_gethostbyname
 
 
 def enable_socket() -> None:
     """re-enable socket.socket to enable the Internet. useful in testing."""
     socket.socket = _true_socket  # type: ignore[misc]
+    if socket.getaddrinfo is _guarded_getaddrinfo:
+        socket.getaddrinfo = _true_getaddrinfo
+    if socket.gethostbyname is _guarded_gethostbyname:
+        socket.gethostbyname = _true_gethostbyname
 
 
 def pytest_configure(config: pytest.Config) -> None:
@@ -342,3 +362,7 @@ def _remove_restrictions() -> None:
     """restore socket.socket.* to allow access to the Internet. useful in testing."""
     socket.socket = _true_socket  # type: ignore[misc]
     socket.socket.connect = _true_connect  # type: ignore[method-assign]
+    if socket.getaddrinfo is _guarded_getaddrinfo:
+        socket.getaddrinfo = _true_getaddrinfo
+    if socket.gethostbyname is _guarded_gethostbyname:
+        socket.gethostbyname = _true_gethostbyname
