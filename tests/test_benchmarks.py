@@ -7,8 +7,6 @@ used by the plugin to resolve, validate, and partition host allow-lists.
 
 from __future__ import annotations
 
-import pytest
-
 from pytest_socket import (
     _partition_allowed,
     disable_socket,
