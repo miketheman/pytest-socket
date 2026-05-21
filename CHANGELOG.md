@@ -4,6 +4,24 @@ This document records all notable changes to
 [pytest-socket](https://pypi.python.org/pypi/pytest-socket). This
 project attempts to adhere to [Semantic Versioning](http://semver.org/).
 
+## [0.8.0][] (2026-05-21)
+
+Enhancements:
+
+- Block DNS resolution (`getaddrinfo`, `gethostbyname`) when sockets are disabled #482
+- Support CIDR network ranges in `allow_hosts` #479
+- Warn before raising on a blocked socket call #468
+- Cache hostname resolutions during a test run #369
+
+Changes:
+
+- **Removed support for Python 3.8 and 3.9.** Python 3.10 is now the minimum.
+- Test against Python 3.13, 3.14, and free-threaded 3.13t/3.14t
+- Replaced Poetry with uv #429
+- Added type hints #465
+- Swapped `pytest-httpbin` for a local test fixture #467
+- Dependency, CI, and development updates
+
 ## [0.7.0][] (2024-01-28)
 
 Enhancements:
@@ -148,3 +166,4 @@ Maintenance release.
 [0.5.1]: https://github.com/miketheman/pytest-socket/compare/0.5.0...0.5.1
 [0.6.0]: https://github.com/miketheman/pytest-socket/compare/0.5.1...0.6.0
 [0.7.0]: https://github.com/miketheman/pytest-socket/compare/0.6.0...0.7.0
+[0.8.0]: https://github.com/miketheman/pytest-socket/compare/0.7.0...0.8.0
