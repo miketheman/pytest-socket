@@ -1,5 +1,7 @@
 import pytest
 
+from pytest_socket import host_from_address, pytest_runtest_setup
+
 from .common import assert_socket_blocked
 from .conftest import unix_sockets_only
 
@@ -307,3 +309,17 @@ def test_enabling_unix_domain_sockets_with_disable_socket(pytester):
         """)
     result = pytester.runpytest("--disable-socket", "--allow-unix-socket")
     result.assert_outcomes(passed=1, skipped=0, failed=1)
+
+
+def test_runtest_setup_skips_items_without_fixturenames():
+    """Items lacking `fixturenames` (non-function tests) are skipped."""
+
+    class FakeItem:
+        pass
+
+    assert pytest_runtest_setup(FakeItem()) is None
+
+
+def test_host_from_address_non_string_returns_none():
+    """A non-string host in the address tuple resolves to None."""
+    assert host_from_address((123, 80)) is None
