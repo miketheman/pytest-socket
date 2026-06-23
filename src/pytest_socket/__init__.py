@@ -353,6 +353,10 @@ def socket_allow_hosts(
             if any(ip in net for net in networks):
                 return _true_connect(inst, *args)
 
+        # Close the real socket before raising. The blocking error is a
+        # RuntimeError, which bypasses callers' `except OSError` cleanup
+        # (e.g. socket.create_connection), so the fd would otherwise leak.
+        inst.close()
         raise SocketConnectBlockedError(allowed_list, host)
 
     socket.socket.connect = guarded_connect  # type: ignore[assignment,method-assign]
