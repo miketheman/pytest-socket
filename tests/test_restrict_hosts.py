@@ -67,7 +67,7 @@ def assert_connect(httpserver, pytester):
         if mark_arg:
             if isinstance(mark_arg, str):
                 mark = f'@pytest.mark.allow_hosts("{mark_arg}")'
-            elif isinstance(mark_arg, list):
+            else:
                 hosts = '","'.join(mark_arg)
                 mark = f'@pytest.mark.allow_hosts(["{hosts}"])'
         code = code_template.format(host, httpserver.port, test_name, mark)

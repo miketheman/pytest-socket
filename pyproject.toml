@@ -48,6 +48,9 @@ socket = 'pytest_socket'
 [tool.uv.build-backend]
 source-include = [".flake8", "tests/*"]
 
+[tool.coverage.run]
+branch = true
+
 [tool.coverage.report]
 include = ["src/pytest_socket/*", "tests/*"]
 
