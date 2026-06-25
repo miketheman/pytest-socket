@@ -512,3 +512,26 @@ def test_name_resolution_cached(pytester, getaddrinfo_hosts):
         "name.internal": 1,
         "name.another": 1,
     }
+
+
+def test_blocked_connect_does_not_leak_socket(pytester):
+    """A blocked connect must not leak the underlying socket.
+
+    Under ``--allow-hosts`` only ``socket.socket.connect`` is guarded, so a
+    real socket is created before the connection is blocked. The block error
+    is a ``RuntimeError``, which bypasses callers' ``except OSError`` cleanup
+    (e.g. ``socket.create_connection``), leaking the file descriptor. Run with
+    ``-W error`` so the resulting ``ResourceWarning`` fails the test.
+    """
+    pytester.makepyfile("""
+        import pytest
+        from urllib.request import urlopen
+
+        def test_blocked():
+            with pytest.raises(Exception):
+                # IP literal avoids DNS; a real socket is created then blocked.
+                urlopen("http://1.2.3.5/")
+    """)
+
+    result = pytester.runpytest("-W", "error", "--allow-hosts=1.2.3.4")
+    result.assert_outcomes(passed=1)
