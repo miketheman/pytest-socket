@@ -76,3 +76,7 @@ target/
 
 # Installation tracking file
 .install.stamp
+
+# mutmut mutation testing artifacts
+mutants/
+.mutmut-cache
