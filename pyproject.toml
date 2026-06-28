@@ -29,6 +29,11 @@ dependencies = ["pytest>=7.0.0"]
 dev = [
     "coverage[toml] >= 7.9",
     "httpx >= 0.28.1",
+    # mutmut 3.6.0 crashes under pytester-based suites (relative source_paths
+    # resolved against a changed cwd). Fixed by boxed/mutmut#527, merged but not
+    # yet released. Pinned to a main commit that includes the fix; switch back to
+    # a released version once one ships with it.
+    "mutmut @ git+https://github.com/boxed/mutmut.git@1d11c1be49ae106df40a5d209c51b1873c0a8a74",
     "mypy >= 1.20",
     "pytest-codspeed>=5.0.2",
     "pytest-randomly >= 3.15.0",
@@ -48,6 +53,13 @@ socket = 'pytest_socket'
 [tool.uv.build-backend]
 source-include = [".flake8", "tests/*"]
 
+[tool.pytest]
+addopts = [
+    # mutmut leaves a copy of the project under mutants/; keep pytest from
+    # collecting it (its tests/ shadow the real ones and clash on import).
+    "--ignore=mutants",
+]
+
 [tool.coverage.run]
 branch = true
 
@@ -66,6 +78,10 @@ strict = true
 ignore_decorators = ["@pytest.fixture"]
 ignore_names = ["pytest_*"]
 paths = ["src/pytest_socket"]
+
+[tool.mutmut]
+source_paths = ["src/pytest_socket"]
+pytest_add_cli_args_test_selection = ["tests/"]
 
 [build-system]
 requires = ["uv_build>=0.7.20,<0.12.0"]
