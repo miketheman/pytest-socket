@@ -52,25 +52,21 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     group.addoption(
         "--disable-socket",
         action="store_true",
-        dest="disable_socket",
         help="Disable socket.socket by default to block network calls.",
     )
     group.addoption(
         "--force-enable-socket",
         action="store_true",
-        dest="force_enable_socket",
         help="Force enable socket.socket network calls (override --disable-socket).",
     )
     group.addoption(
         "--allow-hosts",
-        dest="allow_hosts",
         metavar="ALLOWED_HOSTS_CSV",
         help="Only allow specified hosts through socket.socket.connect((host, port)).",
     )
     group.addoption(
         "--allow-unix-socket",
         action="store_true",
-        dest="allow_unix_socket",
         help="Allow calls if they are to Unix domain sockets",
     )
 
