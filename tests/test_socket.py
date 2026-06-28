@@ -1,6 +1,12 @@
 import pytest
 
-from pytest_socket import host_from_address, pytest_runtest_setup
+from pytest_socket import (
+    SocketBlockedError,
+    disable_socket,
+    enable_socket,
+    host_from_address,
+    pytest_runtest_setup,
+)
 
 from .common import assert_socket_blocked
 from .conftest import unix_sockets_only
@@ -84,6 +90,8 @@ def test_help_message(pytester):
         [
             "socket:",
             "*--disable-socket*Disable socket.socket by default to block network*",
+            "*Force enable socket.socket network calls*",
+            "*--allow-unix-socket*Allow calls if they are to Unix domain sockets*",
         ]
     )
 
@@ -323,3 +331,55 @@ def test_runtest_setup_skips_items_without_fixturenames():
 def test_host_from_address_non_string_returns_none():
     """A non-string host in the address tuple resolves to None."""
     assert host_from_address((123, 80)) is None
+
+
+@unix_sockets_only
+def test_disable_socket_blocks_unix_by_default():
+    """disable_socket() with no arguments blocks Unix sockets too."""
+    import socket
+
+    disable_socket()
+    try:
+        with (
+            pytest.raises(SocketBlockedError),
+            pytest.warns(UserWarning, match="A test tried to use socket.socket."),
+        ):
+            socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    finally:
+        enable_socket()
+
+
+@unix_sockets_only
+def test_disable_socket_marker_respects_allow_unix_socket(pytester):
+    """The `disable_socket` marker honors `--allow-unix-socket`, passing the
+    configured value through (not a hard-coded default)."""
+    pytester.makepyfile("""
+        import pytest
+        import socket
+
+        @pytest.mark.disable_socket
+        def test_unix_socket():
+            socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        """)
+    result = pytester.runpytest("--allow-unix-socket")
+    result.assert_outcomes(passed=1)
+
+
+def test_socket_disabled_fixture_blocks_during_setup(pytester):
+    """The socket_disabled fixture disables sockets early in setup, so a sibling
+    fixture that opens a socket during its own setup is blocked too."""
+    pytester.makepyfile("""
+        import pytest
+        import socket
+
+        @pytest.fixture
+        def network_fixture():
+            socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            yield
+
+        def test_sibling(network_fixture, socket_disabled):
+            pass
+        """)
+    result = pytester.runpytest()
+    result.assert_outcomes(errors=1)
+    result.stdout.fnmatch_lines("*SocketBlockedError*")

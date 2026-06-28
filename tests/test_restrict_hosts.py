@@ -4,7 +4,14 @@ import socket
 
 import pytest
 
-from pytest_socket import normalize_allowed_hosts
+from pytest_socket import (
+    SocketConnectBlockedError,
+    _remove_restrictions,
+    normalize_allowed_hosts,
+    socket_allow_hosts,
+)
+
+from .conftest import unix_sockets_only
 
 localhost = "127.0.0.1"
 
@@ -128,6 +135,10 @@ def test_marker_help_message(pytester):
     )
     result.stdout.fnmatch_lines(
         [
+            "@pytest.mark.disable_socket(): "
+            "Disable socket connections for a specific test",
+            "@pytest.mark.enable_socket(): "
+            "Enable socket connections for a specific test",
             "@pytest.mark.allow_hosts([[]hosts[]]): "
             "Restrict socket connection to defined list of hosts",
         ]
@@ -535,3 +546,56 @@ def test_blocked_connect_does_not_leak_socket(pytester):
 
     result = pytester.runpytest("-W", "error", "--allow-hosts=1.2.3.4")
     result.assert_outcomes(passed=1)
+
+
+def test_cidr_with_host_bits_set_is_parsed_leniently(assert_connect):
+    """A CIDR entry with host bits set (e.g. ``127.0.0.1/8``) is parsed with
+    ``strict=False`` so in-block addresses are still permitted; strict parsing
+    would reject the entry and fall back to treating it as a plain host.
+    """
+    assert_connect(True, mark_arg=f"{localhost}/8")
+
+
+@unix_sockets_only
+def test_allow_unix_socket_still_blocks_disallowed_hosts(pytester, httpserver):
+    """``--allow-unix-socket`` permits Unix sockets but must not become a
+    blanket allow for INET hosts outside the allow-list.
+    """
+    pytester.makepyfile(f"""
+        import socket
+
+        def test_blocked_host():
+            socket.socket().connect(('2.2.2.2', {httpserver.port}))
+        """)
+    result = pytester.runpytest(
+        f"--allow-hosts={httpserver.host}", "--allow-unix-socket"
+    )
+    result.assert_outcomes(failed=1)
+    assert_host_blocked(result, "2.2.2.2")
+
+
+@unix_sockets_only
+def test_socket_allow_hosts_blocks_unix_by_default():
+    """``socket_allow_hosts()`` called without ``allow_unix_socket`` blocks
+    Unix-socket connections (the default is to block).
+    """
+    socket_allow_hosts(["1.2.3.4"])
+    try:
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        with (
+            pytest.raises(SocketConnectBlockedError),
+            pytest.warns(
+                UserWarning, match="A test tried to use socket.socket.connect"
+            ),
+        ):
+            sock.connect("/tmp/pytest-socket-does-not-exist.sock")
+    finally:
+        _remove_restrictions()
+
+
+def test_blocked_message_shows_ip_without_redundant_parenthetical(assert_connect):
+    """An allow-listed IP appears as itself in the blocked-connect message,
+    not redundantly as ``1.2.3.4 (1.2.3.4)``.
+    """
+    result = assert_connect(False, cli_arg="1.2.3.4", host="2.2.2.2")
+    result.stdout.fnmatch_lines('*allowed: "1.2.3.4"*')

@@ -120,3 +120,38 @@ def test_gethostbyname_blocked_under_disable_socket(pytester):
     result.stdout.fnmatch_lines(
         "*SocketBlockedError: A test tried to use socket.gethostbyname.*"
     )
+
+
+def test_enable_socket_restores_dns_within_test():
+    """enable_socket() restores the real getaddrinfo/gethostbyname that
+    disable_socket() swapped out, observable within a single test.
+    """
+    import socket
+
+    from pytest_socket import disable_socket, enable_socket
+
+    disable_socket()
+    enable_socket()
+    # Both DNS entry points must be callable again, not the raising guards.
+    socket.gethostbyname("localhost")
+    socket.getaddrinfo("localhost", None)
+
+
+def test_dns_restored_by_teardown_without_enable(pytester):
+    # A disabled test's teardown must restore gethostbyname even when the next
+    # test does not opt into enable_socket — relying solely on the teardown.
+    pytester.makepyfile("""
+        import pytest
+        import socket
+        from pytest_socket import SocketBlockedError
+
+        @pytest.mark.disable_socket
+        def test_blocked():
+            with pytest.raises(SocketBlockedError):
+                socket.gethostbyname('localhost')
+
+        def test_after():
+            socket.gethostbyname('localhost')
+        """)
+    result = pytester.runpytest("-p", "no:randomly")
+    result.assert_outcomes(passed=2)
