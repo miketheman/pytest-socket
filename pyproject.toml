@@ -82,6 +82,11 @@ paths = ["src/pytest_socket"]
 [tool.mutmut]
 source_paths = ["src/pytest_socket"]
 pytest_add_cli_args_test_selection = ["tests/"]
+# Skip lines whose mutations aren't worth gating on. help= and stacklevel=
+# are cosmetic. strict=False is skipped for its equivalent strict=None mutant
+# (None is falsy, == False); note this also skips the killable strict=True,
+# whose behavior is covered by test_cidr_with_host_bits_set_is_parsed_leniently.
+do_not_mutate_patterns = ["help=", "stacklevel=", "strict=False"]
 
 [build-system]
 requires = ["uv_build>=0.7.20,<0.12.0"]
