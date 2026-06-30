@@ -38,6 +38,8 @@ class SocketConnectBlockedError(RuntimeError):
         *_args: Any,
         **_kwargs: Any,
     ) -> None:
+        self._allowed = allowed
+        self._host = host
         allowed_str = ",".join(allowed)
         msg = (
             "A test tried to use socket.socket.connect() "
@@ -45,6 +47,13 @@ class SocketConnectBlockedError(RuntimeError):
         )
         warnings.warn(msg, stacklevel=2)
         super().__init__(msg)
+
+    def __reduce__(self) -> tuple[Any, tuple[Any, ...]]:
+        # Reconstruct from the original constructor args so the exception
+        # survives pickling by multiprocessing test runners (e.g. pytest-xdist,
+        # Django's `--parallel`). The default `BaseException.__reduce__` would
+        # replay `self.args` (the formatted message) and miss `host`.
+        return (self.__class__, (self._allowed, self._host))
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
