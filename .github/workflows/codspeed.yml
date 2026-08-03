@@ -21,11 +21,11 @@ jobs:
     name: Run benchmarks
     runs-on: ubuntu-24.04-firewall
     steps:
-    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         persist-credentials: false
     - name: Install uv
-      uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
       with:
         enable-cache: true
         prune-cache: false
@@ -34,7 +34,7 @@ jobs:
     - name: Prepare project for development
       run: uv sync
     - name: Run benchmarks
-      uses: CodSpeedHQ/action@c145068895e045cc725ee76fcd2307624b65c3af # v4.17.5
+      uses: CodSpeedHQ/action@f99becdce5e5d51fd556489ebef684f4ecfd6286 # v4.18.5
       with:
         mode: simulation
         run: uv run pytest tests/test_benchmarks.py --codspeed

@@ -1,7 +1,10 @@
+import pickle
+
 import pytest
 
 from pytest_socket import (
     SocketBlockedError,
+    SocketConnectBlockedError,
     disable_socket,
     enable_socket,
     host_from_address,
@@ -291,6 +294,25 @@ def test_blocked_connect_emits_warning(pytester, httpserver):
     result = pytester.runpytest("-W", "always::UserWarning", "--allow-hosts=1.2.3.4")
     result.assert_outcomes(passed=1)
     result.stdout.fnmatch_lines("*A test tried to use socket.socket.connect()*")
+
+
+@pytest.mark.parametrize(
+    "exc",
+    [
+        SocketBlockedError(),
+        SocketConnectBlockedError(["0.0.0.0", "127.0.0.1"], "192.0.80.239"),
+    ],
+)
+def test_exceptions_are_pickleable(exc):
+    """Exceptions must survive a pickle round-trip.
+
+    Multiprocessing test runners (Django's ``--parallel``, pytest-xdist)
+    serialize exceptions across process boundaries; a non-pickleable
+    exception masks the real failure with a confusing ``TypeError``.
+    """
+    restored = pickle.loads(pickle.dumps(exc))
+    assert type(restored) is type(exc)
+    assert restored.args == exc.args
 
 
 @unix_sockets_only
