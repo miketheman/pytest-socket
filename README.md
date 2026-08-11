@@ -161,4 +161,4 @@ pytest plugin by [\@miketheman](https://github.com/miketheman).
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=miketheman/pytest-socket)](https://star-history.com/#miketheman/pytest-socket&Date)
+[![Star History Chart](https://star-history.dera.page/svg?repos=miketheman/pytest-socket)](https://star-history.dera.page/#miketheman/pytest-socket&Date)
