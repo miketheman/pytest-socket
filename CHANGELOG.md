@@ -4,6 +4,21 @@ This document records all notable changes to
 [pytest-socket](https://pypi.python.org/pypi/pytest-socket). This
 project attempts to adhere to [Semantic Versioning](http://semver.org/).
 
+## [0.8.1][] (2026-08-19)
+
+Fixes:
+
+- Close the socket before raising on a blocked connect, fixing a file
+  descriptor leak #496
+- Make `SocketConnectBlockedError` pickleable so it survives multiprocessing
+  test runners such as `pytest-xdist` and Django's `--parallel` #501
+
+Changes:
+
+- Added mutation testing via `make mutmut` #500
+- Added CodSpeed performance benchmarks #486
+- Dependency, CI, and development updates
+
 ## [0.8.0][] (2026-05-21)
 
 Enhancements:
@@ -167,3 +182,4 @@ Maintenance release.
 [0.6.0]: https://github.com/miketheman/pytest-socket/compare/0.5.1...0.6.0
 [0.7.0]: https://github.com/miketheman/pytest-socket/compare/0.6.0...0.7.0
 [0.8.0]: https://github.com/miketheman/pytest-socket/compare/0.7.0...0.8.0
+[0.8.1]: https://github.com/miketheman/pytest-socket/compare/0.8.0...0.8.1
