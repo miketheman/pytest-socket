@@ -50,6 +50,13 @@ dev = [
 Run `pytest --disable-socket`, tests should fail on any access to `socket` or
 libraries using socket with a `SocketBlockedError`.
 
+The restrictions given on the command line hold for the whole pytest run:
+from the moment the initial `conftest.py` files are imported, through
+collection, session-scoped fixtures and every test's setup, call and teardown
+(fixture finalizers included), until `pytest_sessionfinish` has run. Markers
+and fixtures override them for their own test only. `atexit` handlers run
+after pytest has finished and are not covered.
+
 To add this flag as the default behavior, add this section to your
 [`pytest.ini`](https://docs.pytest.org/en/stable/reference/customize.html#pytest-ini):
 
@@ -119,15 +126,21 @@ Entries may be hostnames, IP addresses, or CIDR network ranges such as
 
 Q: Why is network access disabled in some of my tests but not others?
 
-A: pytest's default fixture scope is "function", which `socket_enabled` uses.
-If you create another fixture that creates a socket usage that has a "higher"
-instantiation order, such as at the module/class/session, then the higher order
-fixture will be resolved first, and won't be disabled during the tests.
+A: pytest's default fixture scope is "function", which `socket_enabled` and
+`socket_disabled` use. If you create another fixture that uses a socket and has
+a "higher" instantiation order, such as at the module/class/session, then the
+higher order fixture will be resolved first, and won't see the effect of the
+function-scoped fixture.
 Read more in [this excellent example](https://github.com/miketheman/pytest-socket/issues/45#issue-679835420)
 and more about [pytest fixture order here](https://docs.pytest.org/en/stable/fixture.html#fixture-instantiation-order).
 
-This behavior may change in the future, as we learn more about pytest
-fixture order, and what users expect to happen.
+Q: A session-scoped fixture needs the network. How do I allow it?
+
+A: The command-line restrictions apply outside of tests too, and the
+`socket_enabled` fixture and `enable_socket` marker are per-test. Call
+`pytest_socket.enable_socket()` in the fixture before the network access and
+`pytest_socket.disable_socket()` after it, or list the host in
+`--allow-hosts`.
 
 ## Contributing
 

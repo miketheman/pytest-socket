@@ -4,6 +4,15 @@ This document records all notable changes to
 [pytest-socket](https://pypi.python.org/pypi/pytest-socket). This
 project attempts to adhere to [Semantic Versioning](http://semver.org/).
 
+## Unreleased
+
+Changes:
+
+- **The command-line restrictions now apply to the whole pytest run**, not
+  only to each test's setup and call phase: conftest import, collection,
+  session-scoped fixtures, fixture teardown and `pytest_sessionfinish` are
+  guarded too. Markers and fixtures still override them per test. #537 #539
+
 ## [0.8.1][] (2026-08-19)
 
 Fixes:

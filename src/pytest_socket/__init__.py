@@ -61,7 +61,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     group.addoption(
         "--disable-socket",
         action="store_true",
-        help="Disable socket.socket by default to block network calls.",
+        help="Disable socket.socket for the whole test run to block network calls.",
     )
     group.addoption(
         "--force-enable-socket",
@@ -77,17 +77,6 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         "--allow-unix-socket",
         action="store_true",
         help="Allow calls if they are to Unix domain sockets",
-    )
-    group.addoption(
-        "--socket-scope",
-        choices=("test", "session"),
-        default="test",
-        help=(
-            "Where the CLI restrictions apply. 'test' (default) guards each "
-            "test's setup, call and teardown only. 'session' guards the whole "
-            "pytest run: conftest import, collection, session-scoped fixtures "
-            "and pytest_sessionfinish."
-        ),
     )
 
 
@@ -112,7 +101,6 @@ class _PytestSocketConfig:
     socket_force_enabled: bool
     allow_unix_socket: bool
     allow_hosts: str | list[str] | None
-    session_scope: bool = False
     resolution_cache: dict[str, set[str]] = field(default_factory=dict)
 
 
@@ -174,7 +162,6 @@ def _config_from_namespace(namespace: Any) -> _PytestSocketConfig:
         socket_disabled=namespace.disable_socket,
         allow_unix_socket=namespace.allow_unix_socket,
         allow_hosts=namespace.allow_hosts,
-        session_scope=namespace.socket_scope == "session",
     )
 
 
@@ -202,25 +189,26 @@ def _apply_restrictions(
 
 
 def _apply_baseline(socket_config: _PytestSocketConfig) -> None:
-    """The state between tests: the CLI restrictions in session scope, or the
-    real socket in test scope."""
-    if socket_config.session_scope:
-        _apply_restrictions(
-            socket_config,
-            hosts=socket_config.allow_hosts,
-            disable=socket_config.socket_disabled,
-        )
-    else:
-        _remove_restrictions()
+    """The state outside of any test: the restrictions given on the CLI.
+
+    It holds from the initial conftest import until `pytest_unconfigure`,
+    so collection, session-scoped fixtures and `pytest_sessionfinish` are
+    guarded like a test without markers. Tests override it in their setup
+    and hand it back in their teardown.
+    """
+    _apply_restrictions(
+        socket_config,
+        hosts=socket_config.allow_hosts,
+        disable=socket_config.socket_disabled,
+    )
 
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_load_initial_conftests(early_config: pytest.Config) -> None:
-    """Install the session-scope guard before the initial conftests import."""
+    """Install the baseline before the initial conftests are imported."""
     socket_config = _config_from_namespace(early_config.known_args_namespace)
-    if socket_config.session_scope:
-        early_config.stash[_STASH_KEY] = socket_config
-        _apply_baseline(socket_config)
+    early_config.stash[_STASH_KEY] = socket_config
+    _apply_baseline(socket_config)
 
 
 @pytest.hookimpl(tryfirst=True)

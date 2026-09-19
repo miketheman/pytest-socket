@@ -1,9 +1,9 @@
-"""Where and when the restrictions apply.
+"""Where and when the CLI restrictions apply.
 
-Test scope (the default) guards each test's setup, call and teardown, fixture
-finalizers included (#537). Session scope (``--socket-scope=session``) guards
-the whole pytest run: conftest import, collection, session-scoped fixtures and
-``pytest_sessionfinish`` (#539).
+They hold for the whole pytest run: from the initial conftest import, through
+collection, session-scoped fixtures and every test's setup, call and teardown
+(fixture finalizers included, #537), until `pytest_sessionfinish` has run
+(#539). Markers and fixtures override them for their test only.
 """
 
 import socket
@@ -53,7 +53,7 @@ def probe(pytester, httpserver):
     return assert_phase
 
 
-# --- Test scope: fixture teardown (#537) -----------------------------------
+# --- Fixture teardown (#537) ------------------------------------------------
 
 
 def test_fixture_teardown_is_restricted(pytester, probe):
@@ -154,38 +154,10 @@ def test_xunit_teardown_module_is_restricted(pytester, probe):
     probe(result, "teardown_module", "SocketBlockedError")
 
 
-# --- Test scope is the default, and leaves the rest of the run alone --------
+# --- The whole run (#539) ---------------------------------------------------
 
 
-def test_test_scope_only_guards_tests(pytester, probe):
-    pytester.makeconftest("""
-        from probe import create
-
-        create("conftest import")
-
-        def pytest_sessionfinish(session, exitstatus):
-            create("sessionfinish")
-        """)
-    pytester.makepyfile("""
-        from probe import create
-
-        create("module import")
-
-        def test_it():
-            create("call")
-        """)
-    result = pytester.runpytest("-s", "--disable-socket")
-    result.assert_outcomes(passed=1)
-    probe(result, "conftest import", "created")
-    probe(result, "module import", "created")
-    probe(result, "call", "SocketBlockedError")
-    probe(result, "sessionfinish", "created")
-
-
-# --- Session scope (#539) ---------------------------------------------------
-
-
-def test_session_scope_guards_the_whole_run(pytester, probe):
+def test_restrictions_guard_the_whole_run(pytester, probe):
     pytester.makeconftest("""
         from probe import create
 
@@ -212,7 +184,7 @@ def test_session_scope_guards_the_whole_run(pytester, probe):
         def test_it(sess):
             create("call")
         """)
-    result = pytester.runpytest("-s", "--disable-socket", "--socket-scope=session")
+    result = pytester.runpytest("-s", "--disable-socket")
     result.assert_outcomes(passed=1)
     for phase in (
         "conftest import",
@@ -226,10 +198,10 @@ def test_session_scope_guards_the_whole_run(pytester, probe):
         probe(result, phase, "SocketBlockedError")
 
 
-def test_session_scope_via_addopts(pytester, probe):
+def test_restrictions_via_addopts_guard_conftest_import(pytester, probe):
     pytester.makeini("""
         [pytest]
-        addopts = --disable-socket --socket-scope=session
+        addopts = --disable-socket
         """)
     pytester.makeconftest("""
         from probe import create
@@ -245,7 +217,29 @@ def test_session_scope_via_addopts(pytester, probe):
     probe(result, "conftest import", "SocketBlockedError")
 
 
-def test_session_scope_allow_hosts_applies_outside_tests(pytester, probe, httpserver):
+def test_nothing_is_restricted_without_options(pytester, probe):
+    pytester.makeconftest("""
+        from probe import create
+
+        create("conftest import")
+
+        def pytest_sessionfinish(session, exitstatus):
+            create("sessionfinish")
+        """)
+    pytester.makepyfile("""
+        from probe import create
+
+        def test_it():
+            create("call")
+        """)
+    result = pytester.runpytest("-s")
+    result.assert_outcomes(passed=1)
+    probe(result, "conftest import", "created")
+    probe(result, "call", "created")
+    probe(result, "sessionfinish", "created")
+
+
+def test_allow_hosts_applies_outside_tests(pytester, probe, httpserver):
     pytester.makeconftest("""
         from probe import dial
 
@@ -256,21 +250,17 @@ def test_session_scope_allow_hosts_applies_outside_tests(pytester, probe, httpse
         def test_it():
             pass
         """)
-    blocked = pytester.runpytest(
-        "-s", "--allow-hosts=10.0.0.1", "--socket-scope=session"
-    )
+    blocked = pytester.runpytest("-s", "--allow-hosts=10.0.0.1")
     blocked.assert_outcomes(passed=1)
     probe(blocked, "sessionfinish", "SocketConnectBlockedError")
 
-    allowed = pytester.runpytest(
-        "-s", f"--allow-hosts={httpserver.host}", "--socket-scope=session"
-    )
+    allowed = pytester.runpytest("-s", f"--allow-hosts={httpserver.host}")
     allowed.assert_outcomes(passed=1)
     probe(allowed, "sessionfinish", "connected")
 
 
-def test_session_scope_per_test_overrides_still_apply(pytester, probe):
-    """Markers and fixtures override the baseline for their test only; the
+def test_per_test_overrides_apply_to_their_test_only(pytester, probe):
+    """Markers and fixtures override the baseline for their test; the
     baseline comes back for everything after."""
     pytester.makeconftest("""
         from probe import create
@@ -296,7 +286,7 @@ def test_session_scope_per_test_overrides_still_apply(pytester, probe):
         def test_plain():
             create("plain")
         """)
-    result = pytester.runpytest("-s", "--disable-socket", "--socket-scope=session")
+    result = pytester.runpytest("-s", "--disable-socket")
     result.assert_outcomes(passed=4)
     probe(result, "fixture", "created")
     probe(result, "marker", "created")
@@ -305,7 +295,7 @@ def test_session_scope_per_test_overrides_still_apply(pytester, probe):
     probe(result, "sessionfinish", "SocketBlockedError")
 
 
-def test_session_scope_force_enable_wins(pytester, probe):
+def test_force_enable_wins_everywhere(pytester, probe):
     pytester.makeconftest("""
         from probe import create
 
@@ -317,17 +307,15 @@ def test_session_scope_force_enable_wins(pytester, probe):
         def test_it():
             create("call")
         """)
-    result = pytester.runpytest(
-        "-s", "--disable-socket", "--force-enable-socket", "--socket-scope=session"
-    )
+    result = pytester.runpytest("-s", "--disable-socket", "--force-enable-socket")
     result.assert_outcomes(passed=1)
     probe(result, "conftest import", "created")
     probe(result, "call", "created")
 
 
-def test_session_scope_finalizers_after_maxfail(pytester, probe):
+def test_finalizers_after_maxfail_are_restricted(pytester, probe):
     """After a teardown error under `-x`, pytest finalizes the remaining
-    fixtures in `pytest_sessionfinish`; session scope still guards them."""
+    fixtures in `pytest_sessionfinish`; the baseline still guards them."""
     pytester.makepyfile("""
         import pytest
         from probe import create
@@ -348,28 +336,26 @@ def test_session_scope_finalizers_after_maxfail(pytester, probe):
         def test_b(sess):
             pass
         """)
-    result = pytester.runpytest(
-        "-s", "-x", "-p", "no:randomly", "--disable-socket", "--socket-scope=session"
-    )
+    result = pytester.runpytest("-s", "-x", "-p", "no:randomly", "--disable-socket")
     result.assert_outcomes(passed=1, errors=1)
     probe(result, "late finalizer", "SocketBlockedError")
 
 
-def test_session_scope_is_undone_at_unconfigure(pytester):
+def test_restrictions_are_undone_at_unconfigure(pytester):
     """An in-process run (pytester, `pytest.main()`) must hand back the real
     socket module when it finishes."""
     pytester.makepyfile("""
         def test_it():
             pass
         """)
-    result = pytester.runpytest("--disable-socket", "--socket-scope=session")
+    result = pytester.runpytest("--disable-socket", "--allow-hosts=10.0.0.1")
     result.assert_outcomes(passed=1)
     assert socket.socket is pytest_socket._true_socket
     assert socket.socket.connect is pytest_socket._true_connect
     assert socket.getaddrinfo is pytest_socket._true_getaddrinfo
 
 
-def test_session_scope_with_doctests(pytester):
+def test_doctests_run_under_the_baseline(pytester):
     pytester.makepyfile('''
         def my_sum(a, b):
             """
@@ -378,12 +364,5 @@ def test_session_scope_with_doctests(pytester):
             """
             return a + b
         ''')
-    result = pytester.runpytest(
-        "--doctest-modules", "--disable-socket", "--socket-scope=session"
-    )
+    result = pytester.runpytest("--doctest-modules", "--disable-socket")
     result.assert_outcomes(passed=1)
-
-
-def test_help_lists_socket_scope(pytester):
-    result = pytester.runpytest("--help")
-    result.stdout.fnmatch_lines(["*--socket-scope={test,session}*"])
