@@ -61,7 +61,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     group.addoption(
         "--disable-socket",
         action="store_true",
-        help="Disable socket.socket for the whole test run to block network calls.",
+        help="Disable socket.socket by default to block network calls.",
     )
     group.addoption(
         "--force-enable-socket",
@@ -144,11 +144,7 @@ def disable_socket(allow_unix_socket: bool = False) -> None:
 
 def enable_socket() -> None:
     """re-enable socket.socket to enable the Internet. useful in testing."""
-    socket.socket = _true_socket  # type: ignore[misc]
-    if socket.getaddrinfo is _guarded_getaddrinfo:
-        socket.getaddrinfo = _true_getaddrinfo
-    if socket.gethostbyname is _guarded_gethostbyname:
-        socket.gethostbyname = _true_gethostbyname
+    _remove_restrictions()
 
 
 def _config_from_namespace(namespace: Any) -> _PytestSocketConfig:
@@ -161,7 +157,7 @@ def _config_from_namespace(namespace: Any) -> _PytestSocketConfig:
         socket_force_enabled=namespace.force_enable_socket,
         socket_disabled=namespace.disable_socket,
         allow_unix_socket=namespace.allow_unix_socket,
-        allow_hosts=namespace.allow_hosts,
+        allow_hosts=namespace.allow_hosts or None,
     )
 
 
@@ -208,6 +204,10 @@ def pytest_load_initial_conftests(early_config: pytest.Config) -> None:
     """Install the baseline before the initial conftests are imported."""
     socket_config = _config_from_namespace(early_config.known_args_namespace)
     early_config.stash[_STASH_KEY] = socket_config
+    # A cleanup, not `pytest_unconfigure`: pytest skips that hook when
+    # `pytest_configure` never ran (usage error, conftest import failure),
+    # and the guards must not outlive the run in an in-process caller.
+    early_config.add_cleanup(_remove_restrictions)
     _apply_baseline(socket_config)
 
 
@@ -224,16 +224,17 @@ def pytest_configure(config: pytest.Config) -> None:
         "allow_hosts([hosts]): Restrict socket connection to defined list of hosts",
     )
 
-    # Store the global configs in the `pytest.Config` object. The initial
-    # conftest hook may already have done so (and started the resolution
-    # cache); the plugin can also be loaded too late for that hook to fire.
-    if _STASH_KEY not in config.stash:
-        config.stash[_STASH_KEY] = _config_from_namespace(config.option)
-    _apply_baseline(config.stash[_STASH_KEY])
-
-
-def pytest_unconfigure(config: pytest.Config) -> None:
-    _remove_restrictions()
+    # Store the global configs in the `pytest.Config` object. Rebuild them
+    # from the final options: another plugin may have added arguments after
+    # the early hook above read them, or the plugin may have been loaded too
+    # late for that hook to fire at all.
+    socket_config = _config_from_namespace(config.option)
+    if _STASH_KEY in config.stash:
+        socket_config.resolution_cache = config.stash[_STASH_KEY].resolution_cache
+    else:
+        config.add_cleanup(_remove_restrictions)
+    config.stash[_STASH_KEY] = socket_config
+    _apply_baseline(socket_config)
 
 
 def pytest_runtest_setup(item: pytest.Item) -> None:
@@ -255,7 +256,7 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
         or item.get_closest_marker("enable_socket")
         or socket_config.socket_force_enabled
     ):
-        _remove_restrictions()
+        enable_socket()
         return
 
     # If the test has the `disable_socket` marker, it's explicitly disabled.
@@ -265,14 +266,17 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
         _apply_restrictions(socket_config, hosts=None, disable=True)
         return
 
-    # A marker allow-list overrides the CLI one; then the global config.
+    # A marker allow-list replaces the CLI one.
     mark_restrictions = item.get_closest_marker("allow_hosts")
-    hosts = (
-        mark_restrictions.args[0] if mark_restrictions else socket_config.allow_hosts
-    )
-    _apply_restrictions(
-        socket_config, hosts=hosts, disable=socket_config.socket_disabled
-    )
+    if mark_restrictions:
+        _apply_restrictions(
+            socket_config,
+            hosts=mark_restrictions.args[0],
+            disable=socket_config.socket_disabled,
+        )
+
+    # Otherwise the baseline, restored by the previous teardown, already
+    # holds, on top of whatever earlier `pytest_runtest_setup` impls did.
 
 
 @pytest.hookimpl(hookwrapper=True, tryfirst=True)

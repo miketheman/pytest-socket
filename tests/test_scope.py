@@ -270,7 +270,7 @@ def test_per_test_overrides_apply_to_their_test_only(pytester, probe):
         """)
     pytester.makepyfile("""
         import pytest
-        from probe import create, dial
+        from probe import create
 
         def test_fixture(socket_enabled):
             create("fixture")
@@ -281,7 +281,7 @@ def test_per_test_overrides_apply_to_their_test_only(pytester, probe):
 
         @pytest.mark.allow_hosts(["10.0.0.1"])
         def test_allow_hosts_marker():
-            dial("allow_hosts")
+            create("allow_hosts")
 
         def test_plain():
             create("plain")
@@ -290,7 +290,7 @@ def test_per_test_overrides_apply_to_their_test_only(pytester, probe):
     result.assert_outcomes(passed=4)
     probe(result, "fixture", "created")
     probe(result, "marker", "created")
-    probe(result, "allow_hosts", "SocketConnectBlockedError")
+    probe(result, "allow_hosts", "created")
     probe(result, "plain", "SocketBlockedError")
     probe(result, "sessionfinish", "SocketBlockedError")
 
@@ -366,3 +366,76 @@ def test_doctests_run_under_the_baseline(pytester):
         ''')
     result = pytester.runpytest("--doctest-modules", "--disable-socket")
     result.assert_outcomes(passed=1)
+
+
+def test_empty_allow_hosts_is_no_allow_list(pytester, probe):
+    """`--allow-hosts=` (say, from an unset variable in addopts) restricts
+    nothing, as before."""
+    pytester.makepyfile("""
+        from probe import dial
+
+        def test_it():
+            dial("call")
+        """)
+    result = pytester.runpytest("-s", "--allow-hosts=")
+    result.assert_outcomes(passed=1)
+    probe(result, "call", "connected")
+
+
+def test_conftest_runtest_setup_recipe_still_works(pytester, probe):
+    """The README's conftest recipe disables sockets without any option; the
+    plugin's own setup must not undo what an earlier hook impl did."""
+    pytester.makeconftest("""
+        from pytest_socket import disable_socket
+
+        def pytest_runtest_setup():
+            disable_socket()
+        """)
+    pytester.makepyfile("""
+        from probe import create
+
+        def test_it():
+            create("call")
+        """)
+    result = pytester.runpytest("-s")
+    result.assert_outcomes(passed=1)
+    probe(result, "call", "SocketBlockedError")
+
+
+def test_enable_socket_lifts_allow_hosts(pytester, probe):
+    """`enable_socket()` restores `connect()` too, so a session fixture can
+    use it to get past `--allow-hosts`."""
+    pytester.makepyfile("""
+        import pytest
+        import pytest_socket
+        from probe import dial
+
+        @pytest.fixture(scope="session")
+        def sess():
+            pytest_socket.enable_socket()
+            dial("session setup")
+            yield
+
+        def test_it(sess):
+            pass
+        """)
+    result = pytester.runpytest("-s", "--allow-hosts=10.0.0.1")
+    result.assert_outcomes(passed=1)
+    probe(result, "session setup", "connected")
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        pytest.param(["--no-such-option"], id="usage error"),
+        pytest.param([], id="conftest import error"),
+    ],
+)
+def test_guards_do_not_outlive_a_failed_run(pytester, args):
+    """`pytest_unconfigure` is skipped when `pytest_configure` never ran, so
+    the baseline is undone by a config cleanup instead."""
+    if not args:
+        pytester.makeconftest("raise ImportError('boom')")
+    pytester.runpytest("--disable-socket", "--allow-hosts=10.0.0.1", *args)
+    assert socket.socket is pytest_socket._true_socket
+    assert socket.socket.connect is pytest_socket._true_connect

@@ -12,6 +12,8 @@ Changes:
   only to each test's setup and call phase: conftest import, collection,
   session-scoped fixtures, fixture teardown and `pytest_sessionfinish` are
   guarded too. Markers and fixtures still override them per test. #537 #539
+- `enable_socket()` now also lifts the `connect()` restriction installed by
+  `--allow-hosts`, matching the `socket_enabled` fixture and marker. #27
 
 ## [0.8.1][] (2026-08-19)
 

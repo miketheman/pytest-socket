@@ -92,7 +92,7 @@ def test_help_message(pytester):
     result.stdout.fnmatch_lines(
         [
             "socket:",
-            "*--disable-socket*Disable socket.socket for the whole test run*",
+            "*--disable-socket*Disable socket.socket by default to block network*",
             "*Force enable socket.socket network calls*",
             "*--allow-unix-socket*Allow calls if they are to Unix domain sockets*",
         ]
