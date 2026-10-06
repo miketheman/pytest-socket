@@ -9,8 +9,8 @@ from contextlib import ExitStack, contextmanager
 from pathlib import Path
 
 import pytest
-import pytest_socket
 
+import pytest_socket
 from pytest_socket import (
     SocketBlockedError,
     SocketConnectBlockedError,
