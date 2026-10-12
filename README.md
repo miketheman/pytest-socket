@@ -74,6 +74,17 @@ def pytest_runtest_setup():
     disable_socket()
 ```
 
+Each blocked call also emits a `SocketBlockedWarning` (a `UserWarning`), so it
+stays visible even when code catches the error. To silence it, add a warning
+filter to your `pytest.ini`:
+
+```ini
+[pytest]
+filterwarnings = ignore::pytest_socket.SocketBlockedWarning
+```
+
+or, in `pyproject.toml`, `filterwarnings = ["ignore::pytest_socket.SocketBlockedWarning"]`.
+
 If you exceptionally want to enable socket for one particular execution
 pass `--force-enable-socket`. It takes precedence over `--disable-socket`.
 

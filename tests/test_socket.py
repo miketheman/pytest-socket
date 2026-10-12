@@ -261,40 +261,79 @@ def test_socket_subclass_is_still_blocked(pytester):
     assert_socket_blocked(result)
 
 
-def test_blocked_socket_emits_warning(pytester):
-    """Ensure SocketBlockedError emits a warning before raising.
-
-    This makes blocked calls visible in test output even when the
-    exception is caught by a bare ``except Exception`` block.
-    """
-    pytester.makepyfile("""
-        import socket
-
-        def test_swallowed_socket(socket_disabled):
-            try:
-                socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            except Exception:
-                pass  # swallow the error, simulating legacy code
-        """)
-    result = pytester.runpytest("-W", "always::UserWarning", "--disable-socket")
-    result.assert_outcomes(passed=1)
-    result.stdout.fnmatch_lines("*A test tried to use socket.socket.*")
-
-
-def test_blocked_connect_emits_warning(pytester, httpserver):
-    """Ensure SocketConnectBlockedError emits a warning before raising."""
+@pytest.mark.parametrize(
+    "call, arg, name",
+    [
+        ("socket.socket()", "--disable-socket", "socket.socket."),
+        (
+            "socket.socket().connect(('1.1.1.1', 80))",
+            "--allow-hosts=127.0.0.1",
+            "socket.socket.connect()",
+        ),
+    ],
+    ids=["socket", "connect"],
+)
+def test_blocked_call_emits_warning(pytester, call, arg, name):
+    """A blocked call warns before raising, so it stays visible in the output
+    even when the code under test swallows the exception."""
     pytester.makepyfile(f"""
         import socket
 
-        def test_swallowed_connect():
+        def test_swallowed():
             try:
-                socket.socket().connect(('{httpserver.host}', {httpserver.port}))
+                {call}
             except Exception:
-                pass  # swallow the error
+                pass
         """)
-    result = pytester.runpytest("-W", "always::UserWarning", "--allow-hosts=1.2.3.4")
+    result = pytester.runpytest("-W", "always::UserWarning", arg)
+    result.assert_outcomes(passed=1, warnings=1)
+    result.stdout.fnmatch_lines(f"*SocketBlockedWarning: A test tried to use {name}*")
+
+
+SWALLOWED_WITH_UNRELATED_WARNING = """
+    import socket
+    import warnings
+
+    def test_filtered(socket_disabled):
+        warnings.warn("unrelated")
+        try:
+            socket.socket()
+        except Exception:
+            pass
+    """
+
+
+def test_block_warning_category_can_be_filtered(pytester):
+    """Filtering SocketBlockedWarning hides only the block warning."""
+    pytester.makepyfile(SWALLOWED_WITH_UNRELATED_WARNING)
+    result = pytester.runpytest("-W", "always::UserWarning")
+    result.assert_outcomes(passed=1, warnings=2)
+    result.stdout.fnmatch_lines("*SocketBlockedWarning: A test tried*")
+
+    result = pytester.runpytest(
+        "-W", "always::UserWarning", "-W", "ignore::pytest_socket.SocketBlockedWarning"
+    )
+    result.assert_outcomes(passed=1, warnings=1)
+    result.stdout.fnmatch_lines("*UserWarning: unrelated*")
+    result.stdout.no_fnmatch_line("*A test tried*")
+
+
+def test_blocked_call_raises_with_warnings_as_errors(pytester):
+    """With warnings as errors, ignoring the block warning lets tests still
+    assert on the plugin's exception."""
+    pytester.makepyfile("""
+        import pytest
+        import socket
+        from pytest_socket import SocketBlockedError
+
+        def test_blocked(socket_disabled):
+            with pytest.raises(SocketBlockedError):
+                socket.socket()
+        """)
+    result = pytester.runpytest(
+        "-W", "error", "-W", "ignore::pytest_socket.SocketBlockedWarning"
+    )
     result.assert_outcomes(passed=1)
-    result.stdout.fnmatch_lines("*A test tried to use socket.socket.connect()*")
 
 
 def test_constructing_exceptions_does_not_warn():

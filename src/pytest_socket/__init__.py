@@ -19,6 +19,10 @@ _true_gethostbyname = socket.gethostbyname
 _IPNetwork = ipaddress.IPv4Network | ipaddress.IPv6Network
 
 
+class SocketBlockedWarning(UserWarning):
+    """Emitted when pytest-socket blocks a call, alongside the raised error."""
+
+
 class SocketBlockedError(RuntimeError):
     def __init__(
         self,
@@ -113,7 +117,7 @@ def _warn_blocked(exc: RuntimeError) -> RuntimeError:
     """Emit the block warning for ``exc`` and return it for the caller to raise,
     so blocked calls stay visible even when the exception is swallowed by a
     bare ``except``."""
-    warnings.warn(str(exc), stacklevel=2)
+    warnings.warn(str(exc), SocketBlockedWarning, stacklevel=2)
     return exc
 
 

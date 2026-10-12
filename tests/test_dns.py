@@ -180,4 +180,6 @@ def test_blocked_dns_emits_warning(pytester, call, name):
         """)
     result = pytester.runpytest("-W", "always::UserWarning", "--disable-socket")
     result.assert_outcomes(passed=1)
-    result.stdout.fnmatch_lines(f"*A test tried to use socket.{name}.*")
+    result.stdout.fnmatch_lines(
+        f"*SocketBlockedWarning: A test tried to use socket.{name}.*"
+    )
