@@ -30,11 +30,11 @@ jobs:
         enable-cache: true
         prune-cache: false
     - name: Set up Python
-      run: uv python install '3.14'
+      run: uv python install '3.15'
     - name: Prepare project for development
       run: uv sync
     - name: Run benchmarks
-      uses: CodSpeedHQ/action@373d6868929f444bc08d901fd0eb0ad52a8875ea # v5.2.1
+      uses: CodSpeedHQ/action@f842b9a3ffe213dbb81768fd7f7eeb4dfcf1c369 # v5.4.2
       with:
         mode: simulation
         run: uv run pytest tests/test_benchmarks.py --codspeed
