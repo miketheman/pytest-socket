@@ -1,4 +1,5 @@
 import pickle
+import warnings
 
 import pytest
 
@@ -296,11 +297,21 @@ def test_blocked_connect_emits_warning(pytester, httpserver):
     result.stdout.fnmatch_lines("*A test tried to use socket.socket.connect()*")
 
 
+def test_constructing_exceptions_does_not_warn():
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        SocketBlockedError()
+        SocketConnectBlockedError(["127.0.0.1"], "192.0.80.239")
+
+
 @pytest.mark.parametrize(
     "exc",
     [
-        SocketBlockedError(),
-        SocketConnectBlockedError(["0.0.0.0", "127.0.0.1"], "192.0.80.239"),
+        pytest.param(SocketBlockedError(), id="SocketBlockedError"),
+        pytest.param(
+            SocketConnectBlockedError(["0.0.0.0", "127.0.0.1"], "192.0.80.239"),
+            id="SocketConnectBlockedError",
+        ),
     ],
 )
 def test_exceptions_are_pickleable(exc):
@@ -310,7 +321,9 @@ def test_exceptions_are_pickleable(exc):
     serialize exceptions across process boundaries; a non-pickleable
     exception masks the real failure with a confusing ``TypeError``.
     """
-    restored = pickle.loads(pickle.dumps(exc))
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        restored = pickle.loads(pickle.dumps(exc))
     assert type(restored) is type(exc)
     assert restored.args == exc.args
 
