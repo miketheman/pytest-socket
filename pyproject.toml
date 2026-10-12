@@ -20,7 +20,6 @@ classifiers = [
     "Programming Language :: Python :: 3.15",
     "Programming Language :: Python :: Implementation :: CPython",
     "Operating System :: OS Independent",
-    "License :: OSI Approved :: MIT License",
     "Typing :: Typed",
 ]
 requires-python = ">= 3.10"
