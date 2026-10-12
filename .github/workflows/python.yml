@@ -36,8 +36,7 @@ jobs:
       with:
         enable-cache: true
         prune-cache: false
-    - name: Set up Python
-      run: uv python install '${{ matrix.python-version }}' # zizmor: ignore[template-injection]
+        python-version: ${{ matrix.python-version }}
     - name: Prepare project for development
       run: uv sync
     - name: Check types
