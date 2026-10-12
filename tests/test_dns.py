@@ -1,5 +1,7 @@
 """Tests for the DNS-resolution guard added alongside --disable-socket."""
 
+import pytest
+
 
 def test_dns_restored_between_tests(pytester):
     # teardown of a blocked test must restore getaddrinfo/gethostbyname so the
@@ -155,3 +157,29 @@ def test_dns_restored_by_teardown_without_enable(pytester):
         """)
     result = pytester.runpytest("-p", "no:randomly")
     result.assert_outcomes(passed=2)
+
+
+@pytest.mark.parametrize(
+    "call, name",
+    [
+        ("socket.getaddrinfo('localhost', 80)", "getaddrinfo"),
+        ("socket.gethostbyname('localhost')", "gethostbyname"),
+    ],
+    ids=["getaddrinfo", "gethostbyname"],
+)
+def test_blocked_dns_emits_warning(pytester, call, name):
+    """A swallowed blocked lookup still shows up as a warning."""
+    pytester.makepyfile(f"""
+        import socket
+
+        def test_swallowed_lookup():
+            try:
+                {call}
+            except Exception:
+                pass  # swallow the error
+        """)
+    result = pytester.runpytest("-W", "always::UserWarning", "--disable-socket")
+    result.assert_outcomes(passed=1)
+    result.stdout.fnmatch_lines(
+        f"*SocketBlockedWarning: A test tried to use socket.{name}.*"
+    )

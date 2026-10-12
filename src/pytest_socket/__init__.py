@@ -19,6 +19,10 @@ _true_gethostbyname = socket.gethostbyname
 _IPNetwork = ipaddress.IPv4Network | ipaddress.IPv6Network
 
 
+class SocketBlockedWarning(UserWarning):
+    """Emitted when pytest-socket blocks a call, alongside the raised error."""
+
+
 class SocketBlockedError(RuntimeError):
     def __init__(
         self,
@@ -26,7 +30,6 @@ class SocketBlockedError(RuntimeError):
         *_args: Any,
         **_kwargs: Any,
     ) -> None:
-        warnings.warn(msg, stacklevel=2)
         super().__init__(msg)
 
 
@@ -45,7 +48,6 @@ class SocketConnectBlockedError(RuntimeError):
             "A test tried to use socket.socket.connect() "
             f'with host "{host}" (allowed: "{allowed_str}").'
         )
-        warnings.warn(msg, stacklevel=2)
         super().__init__(msg)
 
     def __reduce__(self) -> tuple[Any, tuple[Any, ...]]:
@@ -111,12 +113,20 @@ def _is_unix_socket(family: int) -> bool:
     return hasattr(socket, "AF_UNIX") and family == socket.AF_UNIX
 
 
+def _warn_blocked(exc: RuntimeError) -> RuntimeError:
+    """Emit the block warning for ``exc`` and return it for the caller to raise,
+    so blocked calls stay visible even when the exception is swallowed by a
+    bare ``except``."""
+    warnings.warn(str(exc), SocketBlockedWarning, stacklevel=2)
+    return exc
+
+
 def _guarded_getaddrinfo(*_args: Any, **_kwargs: Any) -> Any:
-    raise SocketBlockedError("A test tried to use socket.getaddrinfo.")
+    raise _warn_blocked(SocketBlockedError("A test tried to use socket.getaddrinfo."))
 
 
 def _guarded_gethostbyname(*_args: Any, **_kwargs: Any) -> Any:
-    raise SocketBlockedError("A test tried to use socket.gethostbyname.")
+    raise _warn_blocked(SocketBlockedError("A test tried to use socket.gethostbyname."))
 
 
 def disable_socket(allow_unix_socket: bool = False) -> None:
@@ -135,7 +145,7 @@ def disable_socket(allow_unix_socket: bool = False) -> None:
             if _is_unix_socket(family) and allow_unix_socket:
                 return super().__new__(cls, family, type, proto, fileno)  # type: ignore[call-arg] # noqa E501
 
-            raise SocketBlockedError()
+            raise _warn_blocked(SocketBlockedError())
 
     socket.socket = GuardedSocket  # type: ignore[misc]
     socket.getaddrinfo = _guarded_getaddrinfo
@@ -362,7 +372,7 @@ def socket_allow_hosts(
         # RuntimeError, which bypasses callers' `except OSError` cleanup
         # (e.g. socket.create_connection), so the fd would otherwise leak.
         inst.close()
-        raise SocketConnectBlockedError(allowed_list, host)
+        raise _warn_blocked(SocketConnectBlockedError(allowed_list, host))
 
     socket.socket.connect = guarded_connect  # type: ignore[assignment,method-assign]
 
