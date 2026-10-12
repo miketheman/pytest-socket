@@ -3,6 +3,7 @@ import socket
 
 import pytest
 
+import pytest_socket
 from pytest_socket import (
     SocketConnectBlockedError,
     _remove_restrictions,
@@ -110,7 +111,7 @@ def getaddrinfo_hosts(monkeypatch):
         )
         return [v4]
 
-    monkeypatch.setattr(socket, "getaddrinfo", _getaddrinfo)
+    monkeypatch.setattr(pytest_socket, "_true_getaddrinfo", _getaddrinfo)
     return hosts
 
 
@@ -598,3 +599,20 @@ def test_blocked_message_shows_ip_without_redundant_parenthetical(assert_connect
     """
     result = assert_connect(False, cli_arg="1.2.3.4", host="2.2.2.2")
     result.stdout.fnmatch_lines('*allowed: "1.2.3.4"*')
+
+
+def test_hostname_allow_list_resolves_after_conftest_disable_socket(pytester):
+    """Resolving allowed hostnames uses the real getaddrinfo, so it works even
+    when a conftest has already called disable_socket()."""
+    pytester.makeconftest("""
+        from pytest_socket import disable_socket
+
+        def pytest_runtest_setup():
+            disable_socket()
+        """)
+    pytester.makepyfile("""
+        def test_math():
+            assert 1 + 1 == 2
+        """)
+    result = pytester.runpytest("--allow-hosts=localhost")
+    result.assert_outcomes(passed=1)

@@ -277,7 +277,7 @@ def resolve_hostnames(hostname: str) -> set[str]:
     try:
         return {
             addr_struct[0]  # type: ignore[misc]
-            for *_, addr_struct in socket.getaddrinfo(hostname, None)
+            for *_, addr_struct in _true_getaddrinfo(hostname, None)
         }
     except socket.gaierror:
         return set()
