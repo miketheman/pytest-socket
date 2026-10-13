@@ -1,9 +1,9 @@
 import collections
-import inspect
 import socket
 
 import pytest
 
+import pytest_socket
 from pytest_socket import (
     SocketConnectBlockedError,
     _remove_restrictions,
@@ -19,37 +19,37 @@ connect_code_template = """
     import socket
     import pytest
 
-    {3}
-    def {2}():
-        socket.socket().connect(('{0}', {1}))
+    {mark}
+    def test_func():
+        socket.socket().connect(('{host}', {port}))
 """
 
 connect_unicode_code_template = """
     import socket
     import pytest
 
-    {3}
-    def {2}():
-        socket.socket().connect((u'{0}', {1}))
+    {mark}
+    def test_func():
+        socket.socket().connect((u'{host}', {port}))
 """
 
 urlopen_code_template = """
     import pytest
     from urllib.request import urlopen
 
-    {3}
-    def {2}():
-        assert urlopen('http://{0}:{1}/').getcode() == 200
+    {mark}
+    def test_func():
+        assert urlopen('http://{host}:{port}/').getcode() == 200
 """
 
 urlopen_hostname_code_template = """
     import pytest
     from urllib.request import urlopen
 
-    {3}
-    def {2}():
-        # Skip {{1}} as we expect {{0}} to be the full hostname with or without port
-        assert urlopen('http://{0}').getcode() == 200
+    {mark}
+    def test_func():
+        # host is the full hostname, with or without a port; port is unused
+        assert urlopen('http://{host}').getcode() == 200
 """
 
 
@@ -61,15 +61,15 @@ def assert_host_blocked(result, host):
 
 @pytest.fixture
 def assert_connect(httpserver, pytester):
-    def assert_socket_connect(should_pass, **kwargs):
-        # get the name of the calling function
-        test_name = inspect.stack()[1][3]
-
+    def assert_socket_connect(
+        should_pass,
+        *,
+        host=httpserver.host,
+        cli_arg=None,
+        code_template=connect_code_template,
+        mark_arg=None,
+    ):
         mark = ""
-        host = kwargs.get("host", httpserver.host)
-        cli_arg = kwargs.get("cli_arg", None)
-        code_template = kwargs.get("code_template", connect_code_template)
-        mark_arg = kwargs.get("mark_arg", None)
 
         if mark_arg:
             if isinstance(mark_arg, str):
@@ -77,7 +77,7 @@ def assert_connect(httpserver, pytester):
             else:
                 hosts = '","'.join(mark_arg)
                 mark = f'@pytest.mark.allow_hosts(["{hosts}"])'
-        code = code_template.format(host, httpserver.port, test_name, mark)
+        code = code_template.format(host=host, port=httpserver.port, mark=mark)
         pytester.makepyfile(code)
 
         if cli_arg:
@@ -111,7 +111,7 @@ def getaddrinfo_hosts(monkeypatch):
         )
         return [v4]
 
-    monkeypatch.setattr(socket, "getaddrinfo", _getaddrinfo)
+    monkeypatch.setattr(pytest_socket, "_true_getaddrinfo", _getaddrinfo)
     return hosts
 
 
@@ -599,3 +599,20 @@ def test_blocked_message_shows_ip_without_redundant_parenthetical(assert_connect
     """
     result = assert_connect(False, cli_arg="1.2.3.4", host="2.2.2.2")
     result.stdout.fnmatch_lines('*allowed: "1.2.3.4"*')
+
+
+def test_hostname_allow_list_resolves_after_conftest_disable_socket(pytester):
+    """Resolving allowed hostnames uses the real getaddrinfo, so it works even
+    when a conftest has already called disable_socket()."""
+    pytester.makeconftest("""
+        from pytest_socket import disable_socket
+
+        def pytest_runtest_setup():
+            disable_socket()
+        """)
+    pytester.makepyfile("""
+        def test_math():
+            assert 1 + 1 == 2
+        """)
+    result = pytester.runpytest("--allow-hosts=localhost")
+    result.assert_outcomes(passed=1)

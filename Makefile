@@ -24,8 +24,8 @@ test: $(INSTALL_STAMP)
 	@uv run coverage run -m pytest $(PYTEST_FLAGS) ; uv run coverage report --show-missing
 
 mutmut: $(INSTALL_STAMP)
-	@uv run mutmut run
-	@results=$$(uv run mutmut results); \
+	@uv run --group mutmut mutmut run
+	@results=$$(uv run --group mutmut mutmut results); \
 	echo "$$results"; \
 	bad=$$(echo "$$results" | grep -E "__mutmut_[0-9]+:" | grep -v ": segfault$$" || true); \
 	if [ -n "$$bad" ]; then \
