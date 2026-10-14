@@ -142,7 +142,9 @@ def disable_socket(allow_unix_socket: bool = False) -> None:
             proto: int = -1,
             fileno: int | None = None,
         ) -> GuardedSocket:
-            if _is_unix_socket(family) and allow_unix_socket:
+            if (fileno is not None and not _is_unix_socket(family)) or (
+                _is_unix_socket(family) and allow_unix_socket
+            ):
                 return super().__new__(cls, family, type, proto, fileno)  # type: ignore[call-arg] # noqa E501
 
             raise _warn_blocked(SocketBlockedError())
