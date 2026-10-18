@@ -367,6 +367,15 @@ def test_exceptions_are_pickleable(exc):
     assert restored.args == exc.args
 
 
+def test_connect_blocked_error_preserves_context_when_pickleable():
+    """Pickling must retain the host and allowlist in the error message."""
+    exc = SocketConnectBlockedError(["127.0.0.1", "::1"], "192.0.80.239")
+
+    restored = pickle.loads(pickle.dumps(exc))
+
+    assert str(restored) == str(exc)
+
+
 @unix_sockets_only
 def test_unix_domain_sockets_blocked_with_disable_socket(pytester):
     pytester.makepyfile("""
