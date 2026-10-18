@@ -243,8 +243,13 @@ def _resolve_allow_hosts(item: pytest.Item) -> str | list[str] | None:
     return hosts
 
 
-def pytest_runtest_teardown() -> None:
-    _remove_restrictions()
+@pytest.hookimpl(hookwrapper=True, tryfirst=True)
+def pytest_runtest_teardown() -> Iterator[None]:
+    """Keep restrictions through teardown hooks and fixture finalizers."""
+    try:
+        yield
+    finally:
+        _remove_restrictions()
 
 
 def host_from_address(address: tuple[Any, ...]) -> str | None:

@@ -457,3 +457,245 @@ def test_socket_disabled_fixture_blocks_during_setup(pytester):
     result = pytester.runpytest()
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines("*SocketBlockedError*")
+
+
+@pytest.mark.parametrize("scope", ["function", "class", "module", "session"])
+@pytest.mark.parametrize(
+    "use_addfinalizer", [False, True], ids=["yield", "addfinalizer"]
+)
+def test_global_disable_remains_active_during_fixture_teardown(
+    pytester, scope, use_addfinalizer
+):
+    """Fixture finalizers at every scope remain covered by --disable-socket."""
+    teardown = (
+        'request.addfinalizer(lambda: print("teardown:", socket_state()))'
+        if use_addfinalizer
+        else 'yield\n            print("teardown:", socket_state())'
+    )
+    pytester.makepyfile(f"""
+        import socket
+        import pytest
+
+        def socket_state():
+            try:
+                sock = socket.socket()
+            except RuntimeError:
+                return "blocked"
+            else:
+                sock.close()
+                return "open"
+
+        @pytest.fixture(scope="{scope}")
+        def check_socket(request):
+            print("setup:", socket_state())
+            {teardown}
+
+        class TestSocket:
+            def test_socket(self, check_socket):
+                print("call:", socket_state())
+    """)
+    result = pytester.runpytest("--disable-socket", "-s", "-p", "no:randomly")
+    result.assert_outcomes(passed=1)
+    result.stdout.fnmatch_lines(
+        ["*setup: blocked*", "*call: blocked*", "*teardown: blocked*"]
+    )
+
+
+def test_restrictions_remain_through_failing_teardown(pytester):
+    pytester.makepyfile("""
+        import socket
+        import pytest
+
+        def socket_state():
+            try:
+                sock = socket.socket()
+            except RuntimeError:
+                return "blocked"
+            else:
+                sock.close()
+                return "open"
+
+        @pytest.fixture
+        def failing_teardown(request):
+            def finalize():
+                print("teardown:", socket_state())
+                raise ValueError("teardown failed")
+            request.addfinalizer(finalize)
+
+        @pytest.mark.disable_socket
+        def test_socket(failing_teardown):
+            pass
+
+        def test_next_test_is_not_left_restricted():
+            print("next test:", socket_state())
+    """)
+    result = pytester.runpytest("-s", "-p", "no:randomly")
+    result.assert_outcomes(passed=2, errors=1)
+    result.stdout.fnmatch_lines(["*teardown: blocked*", "*next test: open*"])
+
+
+def test_restrictions_remain_until_other_teardown_wrappers_finish(pytester):
+    pytester.makeconftest("""
+        import socket
+        import pytest
+
+        @pytest.hookimpl(hookwrapper=True)
+        def pytest_runtest_teardown(item):
+            yield
+            try:
+                sock = socket.socket()
+            except RuntimeError:
+                print("other wrapper: blocked")
+            else:
+                sock.close()
+                print("other wrapper: open")
+    """)
+    pytester.makepyfile("""
+        import pytest
+
+        @pytest.fixture
+        def fixture():
+            yield
+            print("fixture teardown")
+
+        def test_socket(fixture):
+            pass
+    """)
+    result = pytester.runpytest("--disable-socket", "-s", "-p", "no:randomly")
+    result.assert_outcomes(passed=1)
+    result.stdout.fnmatch_lines(["*fixture teardown*", "*other wrapper: blocked*"])
+
+
+def test_consecutive_markers_keep_each_tests_socket_policy_in_teardown(pytester):
+    pytester.makepyfile("""
+        import socket
+        import pytest
+
+        def socket_state():
+            try:
+                sock = socket.socket()
+            except RuntimeError:
+                return "blocked"
+            else:
+                sock.close()
+                return "open"
+
+        @pytest.fixture
+        def observe_socket(request):
+            name = request.node.name
+            print("setup", name, socket_state())
+            yield
+            print("teardown", name, socket_state())
+
+        @pytest.mark.enable_socket
+        def test_enabled(observe_socket):
+            print("call", "test_enabled", socket_state())
+
+        @pytest.mark.disable_socket
+        def test_disabled(observe_socket):
+            print("call", "test_disabled", socket_state())
+
+        def test_default(observe_socket):
+            print("call", "test_default", socket_state())
+    """)
+    result = pytester.runpytest("--disable-socket", "-s", "-p", "no:randomly")
+    result.assert_outcomes(passed=3)
+    result.stdout.fnmatch_lines(
+        [
+            "*setup test_enabled open*",
+            "*call test_enabled open*",
+            "*teardown test_enabled open*",
+            "*setup test_disabled blocked*",
+            "*call test_disabled blocked*",
+            "*teardown test_disabled blocked*",
+            "*setup test_default blocked*",
+            "*call test_default blocked*",
+            "*teardown test_default blocked*",
+        ]
+    )
+
+
+def test_socket_enable_and_disable_fixtures_keep_policy_in_teardown(pytester):
+    pytester.makepyfile("""
+        import socket
+        import pytest
+
+        def socket_state():
+            try:
+                sock = socket.socket()
+            except RuntimeError:
+                return "blocked"
+            else:
+                sock.close()
+                return "open"
+
+        @pytest.fixture
+        def observe_enabled(socket_enabled, request):
+            print("setup", request.node.name, socket_state())
+            yield
+            print("teardown", request.node.name, socket_state())
+
+        @pytest.fixture
+        def observe_disabled(socket_disabled, request):
+            print("setup", request.node.name, socket_state())
+            yield
+            print("teardown", request.node.name, socket_state())
+
+        @pytest.fixture
+        def observe_default(request):
+            print("setup", request.node.name, socket_state())
+            yield
+            print("teardown", request.node.name, socket_state())
+
+        def test_enabled_fixture(observe_enabled):
+            print("call", "test_enabled_fixture", socket_state())
+
+        def test_disabled_fixture(observe_disabled):
+            print("call", "test_disabled_fixture", socket_state())
+
+        def test_default_fixture(observe_default):
+            print("call", "test_default_fixture", socket_state())
+    """)
+    result = pytester.runpytest("-s", "-p", "no:randomly")
+    result.assert_outcomes(passed=3)
+    result.stdout.fnmatch_lines(
+        [
+            "*setup test_enabled_fixture open*",
+            "*call test_enabled_fixture open*",
+            "*teardown test_enabled_fixture open*",
+            "*setup test_disabled_fixture blocked*",
+            "*call test_disabled_fixture blocked*",
+            "*teardown test_disabled_fixture blocked*",
+            "*setup test_default_fixture open*",
+            "*call test_default_fixture open*",
+            "*teardown test_default_fixture open*",
+        ]
+    )
+
+
+def test_allow_hosts_restriction_remains_active_in_fixture_teardown(pytester):
+    pytester.makepyfile("""
+        import socket
+        import pytest
+
+        def connection_state():
+            try:
+                with socket.socket() as sock:
+                    sock.connect(("0.0.0.0", 0))
+            except RuntimeError:
+                return "blocked"
+            except OSError:
+                return "open"
+            return "open"
+
+        @pytest.fixture
+        def check_connection():
+            yield
+            print("teardown:", connection_state())
+
+        def test_connection(check_connection):
+            print("call:", connection_state())
+    """)
+    result = pytester.runpytest("--allow-hosts=127.0.0.1", "-s", "-p", "no:randomly")
+    result.assert_outcomes(passed=1)
+    result.stdout.fnmatch_lines(["*call: blocked*", "*teardown: blocked*"])
