@@ -50,6 +50,12 @@ dev = [
 Run `pytest --disable-socket`, tests should fail on any access to `socket` or
 libraries using socket with a `SocketBlockedError`.
 
+The CLI policy applies during test-module collection and `pytest_sessionfinish`
+as well as each test. Per-test markers and fixtures can override it for that
+test; teardown restores the CLI policy afterward. Initial `conftest.py` imports
+run before this policy is installed, and `atexit` handlers run after it is
+removed during `pytest_unconfigure`, so those two phases are not covered.
+
 To add this flag as the default behavior, add this section to your
 [`pytest.ini`](https://docs.pytest.org/en/stable/reference/customize.html#pytest-ini):
 
