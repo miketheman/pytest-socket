@@ -156,11 +156,7 @@ def disable_socket(allow_unix_socket: bool = False) -> None:
 
 def enable_socket() -> None:
     """re-enable socket.socket to enable the Internet. useful in testing."""
-    socket.socket = _true_socket  # type: ignore[misc]
-    if socket.getaddrinfo is _guarded_getaddrinfo:
-        socket.getaddrinfo = _true_getaddrinfo
-    if socket.gethostbyname is _guarded_gethostbyname:
-        socket.gethostbyname = _true_gethostbyname
+    _remove_restrictions()
 
 
 def pytest_configure(config: pytest.Config) -> None:
