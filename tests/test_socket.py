@@ -150,7 +150,7 @@ def test_urllib_succeeds_by_default(pytester, httpserver):
     pytester.makepyfile(f"""
         from urllib.request import urlopen
 
-        def test_disable_socket_urllib():
+        def test_urllib():
             assert urlopen('{httpserver.url}/').getcode() == 200
         """)
     result = pytester.runpytest()
@@ -162,11 +162,10 @@ def test_urllib_succeeds_by_default(pytester, httpserver):
 def test_enabled_urllib_succeeds(pytester, httpserver):
     pytester.makepyfile(f"""
         import pytest
-        import pytest_socket
         from urllib.request import urlopen
 
         @pytest.mark.enable_socket
-        def test_disable_socket_urllib():
+        def test_urllib():
             assert urlopen('{httpserver.url}/').getcode() == 200
         """)
     result = pytester.runpytest("--disable-socket")
@@ -181,7 +180,7 @@ def test_disabled_urllib_fails(pytester, httpserver):
         from urllib.request import urlopen
 
         @pytest.mark.disable_socket
-        def test_disable_socket_urllib():
+        def test_urllib():
             assert urlopen('{httpserver.url}/').getcode() == 200
         """)
     result = pytester.runpytest()
@@ -246,7 +245,6 @@ def test_mix_and_match(pytester, socket_enabled):
 def test_socket_subclass_is_still_blocked(pytester):
     pytester.makepyfile("""
         import pytest
-        import pytest_socket
         import socket
 
         @pytest.mark.disable_socket
