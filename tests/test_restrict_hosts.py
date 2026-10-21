@@ -11,6 +11,7 @@ from pytest_socket import (
     socket_allow_hosts,
 )
 
+from .common import assert_host_blocked
 from .conftest import unix_sockets_only
 
 localhost = "127.0.0.1"
@@ -51,12 +52,6 @@ urlopen_hostname_code_template = """
         # host is the full hostname, with or without a port; port is unused
         assert urlopen('http://{host}').getcode() == 200
 """
-
-
-def assert_host_blocked(result, host):
-    result.stdout.fnmatch_lines(
-        f'*A test tried to use socket.socket.connect() with host "{host}"*'
-    )
 
 
 @pytest.fixture
