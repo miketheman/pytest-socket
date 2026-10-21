@@ -140,6 +140,22 @@ and more about [pytest fixture order here](https://docs.pytest.org/en/stable/fix
 This behavior may change in the future, as we learn more about pytest
 fixture order, and what users expect to happen.
 
+Q: Which restrictions apply when a fixture tears down?
+
+A: The ones that were in place when that fixture was set up. A session
+fixture first requested by a test marked `enable_socket` tears down with
+network access, even if the last test in the session was blocked. Calls to
+`disable_socket()` or `socket_allow_hosts()` made inside a test don't reach
+the teardown of fixtures that were set up before the call. Callbacks
+registered with `request.addfinalizer` while the test runs, whether on the
+test's own `request` or from inside a fixture's factory, run after the test's
+restrictions are lifted.
+
+The reverse also holds: a fixture first set up by a blocked test tears down
+blocked, even if a later test that uses it allows the network. If its teardown
+needs the network, call `pytest_socket.enable_socket()` at the start of the
+teardown code.
+
 ## Contributing
 
 Contributions are very welcome. Tests can be run with

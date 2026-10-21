@@ -82,7 +82,14 @@ pytest_add_cli_args_test_selection = ["tests/"]
 # are cosmetic. strict=False is skipped for its equivalent strict=None mutant
 # (None is falsy, == False); note this also skips the killable strict=True,
 # whose behavior is covered by test_cidr_with_host_bits_set_is_parsed_leniently.
-do_not_mutate_patterns = ["help=", "stacklevel=", "strict=False"]
+# The _pytest_socket_guard lookup's False default has the same equivalent None
+# mutant; tests/test_fixture_teardown.py covers the rest of that line.
+do_not_mutate_patterns = [
+    "help=",
+    "stacklevel=",
+    "strict=False",
+    '"_pytest_socket_guard", False',
+]
 
 [build-system]
 requires = ["uv_build>=0.7.20,<0.14.0"]
