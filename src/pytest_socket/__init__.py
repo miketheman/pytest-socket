@@ -135,6 +135,8 @@ def disable_socket(allow_unix_socket: bool = False) -> None:
     class GuardedSocket(socket.socket):
         """socket guard to disable socket creation (from pytest-socket)"""
 
+        _pytest_socket_guard = True
+
         def __new__(
             cls,
             family: socket.AddressFamily | int = -1,
@@ -154,9 +156,6 @@ def disable_socket(allow_unix_socket: bool = False) -> None:
 
 def enable_socket() -> None:
     """re-enable socket.socket to enable the Internet. useful in testing."""
-    # Also drop a connect() guard installed by ``--allow-hosts``. The session
-    # baseline may have patched ``socket.socket.connect`` before this test's
-    # setup, and assigning the original class back does not undo that.
     _remove_restrictions()
 
 
@@ -290,15 +289,76 @@ def _resolve_allow_hosts(item: pytest.Item) -> str | list[str] | None:
 def pytest_runtest_teardown(item: pytest.Item) -> Iterator[None]:
     """Restore the session baseline after fixture finalizers.
 
+    Lift per-test restrictions first. The fixture setup hook applies each
+    fixture's setup-time policy around its own finalizers.
+
     A plain hook would run in undefined order relative to pytest's own
     teardown. Wrapping it, and restoring in ``finally``, puts the CLI policy
     back even when a finalizer raises, so one test's ``enable_socket`` cannot
     stay in force through ``pytest_sessionfinish``.
     """
+    _remove_restrictions()
     try:
         yield
     finally:
         _apply_session_socket_baseline(item.config)
+
+
+# Every attribute pytest-socket patches, as (owner, name).
+_SLOTS = (
+    (socket, "socket"),
+    (_true_socket, "connect"),
+    (socket, "getaddrinfo"),
+    (socket, "gethostbyname"),
+)
+
+
+def _is_ours(value: Any) -> bool:
+    """Whether ``value`` is a real socket function or one of our guards, as
+    opposed to another tool's patch."""
+    return (
+        any(
+            value is ours
+            for ours in (
+                _true_socket,
+                _true_connect,
+                _true_getaddrinfo,
+                _true_gethostbyname,
+                _guarded_getaddrinfo,
+                _guarded_gethostbyname,
+            )
+        )
+        or getattr(value, "_pytest_socket_guard", False) is True
+    )
+
+
+@pytest.hookimpl(hookwrapper=True, tryfirst=True)
+def pytest_fixture_setup(fixturedef: pytest.FixtureDef[Any]) -> Iterator[None]:
+    """Tear each fixture down under the socket state its setup ran under.
+
+    Finalizers run last-in, first-out, so the pair registered around the
+    fixture's setup brackets the teardown it and inner wrappers register:
+    the setup state is applied before it and the previous state put back
+    after. Slots holding another tool's patch, such as monkeypatch's, are
+    left for that tool to undo.
+    """
+    setup_state = [getattr(owner, name) for owner, name in _SLOTS]
+    previous: list[Any] = []
+
+    def restore() -> None:
+        for (owner, name), saved in zip(_SLOTS, previous):
+            if _is_ours(saved) and _is_ours(getattr(owner, name)):
+                setattr(owner, name, saved)
+
+    def apply() -> None:
+        previous[:] = [getattr(owner, name) for owner, name in _SLOTS]
+        for (owner, name), current, wanted in zip(_SLOTS, previous, setup_state):
+            if _is_ours(current) and _is_ours(wanted):
+                setattr(owner, name, wanted)
+
+    fixturedef.addfinalizer(restore)
+    yield
+    fixturedef.addfinalizer(apply)
 
 
 def host_from_address(address: tuple[Any, ...]) -> str | None:
@@ -428,6 +488,7 @@ def socket_allow_hosts(
         inst.close()
         raise _warn_blocked(SocketConnectBlockedError(allowed_list, host))
 
+    guarded_connect._pytest_socket_guard = True  # type: ignore[attr-defined]
     socket.socket.connect = guarded_connect  # type: ignore[assignment,method-assign]
 
 
