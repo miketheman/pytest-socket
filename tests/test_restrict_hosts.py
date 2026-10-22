@@ -160,6 +160,18 @@ def test_single_cli_arg_localhost_hostname_localhost_connect_enabled(assert_conn
     assert_connect(True, cli_arg="localhost", host="localhost")
 
 
+def _resolved_allow_label(hostname: str) -> str:
+    """Same label ``socket_allow_hosts`` puts in SocketConnectBlockedError.
+
+    The address set comes from the process resolver. A dual-stack host
+    includes ``::1``; an IPv4-only ``localhost`` does not.
+    """
+    normalized = normalize_allowed_hosts([hostname])[hostname]
+    if len(normalized) == 1 and next(iter(normalized)) == hostname:
+        return hostname
+    return f"{hostname} ({','.join(sorted(normalized))})"
+
+
 def test_single_cli_arg_connect_disabled_hostname_resolved(assert_connect):
     result = assert_connect(
         False,
@@ -167,9 +179,10 @@ def test_single_cli_arg_connect_disabled_hostname_resolved(assert_connect):
         host="1.2.3.4",
         code_template=urlopen_hostname_code_template,
     )
+    label = _resolved_allow_label("localhost")
     result.stdout.fnmatch_lines(
         '*A test tried to use socket.socket.connect() with host "1.2.3.4" '
-        '(allowed: "localhost (127.0.0.1,::1)")*'
+        f'(allowed: "{label}")*'
     )
 
 
@@ -594,6 +607,23 @@ def test_blocked_message_shows_ip_without_redundant_parenthetical(assert_connect
     """
     result = assert_connect(False, cli_arg="1.2.3.4", host="2.2.2.2")
     result.stdout.fnmatch_lines('*allowed: "1.2.3.4"*')
+
+
+def test_blocked_message_lists_all_resolved_addresses(monkeypatch):
+    monkeypatch.setattr(
+        pytest_socket, "resolve_hostnames", lambda hostname: {"::1", "127.0.0.1"}
+    )
+    socket_allow_hosts(["local.invalid"])
+    try:
+        with socket.socket() as sock:
+            with (
+                pytest.raises(SocketConnectBlockedError) as exc,
+                pytest.warns(pytest_socket.SocketBlockedWarning),
+            ):
+                sock.connect(("127.0.0.2", 1))
+        assert 'allowed: "local.invalid (127.0.0.1,::1)"' in str(exc.value)
+    finally:
+        _remove_restrictions()
 
 
 def test_hostname_allow_list_resolves_after_conftest_disable_socket(pytester):
