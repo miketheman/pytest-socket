@@ -6,13 +6,13 @@ import subprocess
 import sys
 import textwrap
 from contextlib import contextmanager
-from pathlib import Path
 
 import pytest
 
 import pytest_socket
 from pytest_socket import (
     SocketBlockedError,
+    SocketBlockedWarning,
     SocketConnectBlockedError,
     disable_socket,
     enable_socket,
@@ -133,7 +133,6 @@ def test_socket_fd_zero_can_be_wrapped_in_an_isolated_process():
         """)
     subprocess.run(
         [sys.executable, "-c", script],
-        cwd=Path(pytest_socket.__file__).resolve().parents[1],
         stdin=subprocess.DEVNULL,
         timeout=10,
         check=True,
@@ -170,10 +169,11 @@ def test_wrapped_fd_respects_host_restrictions_and_closes_on_denial(allowed):
 def test_socketpair_stays_blocked_after_disable_socket():
     disable_socket()
     try:
-        with pytest.raises(SocketBlockedError):
-            first, second = socket.socketpair()
-            with first, second:
-                pass
+        with (
+            pytest.raises(SocketBlockedError),
+            pytest.warns(SocketBlockedWarning),
+        ):
+            socket.socketpair()
     finally:
         enable_socket()
 
@@ -194,10 +194,11 @@ def test_socketpair_can_be_created_when_unix_sockets_are_allowed():
 def test_socketpair_stays_blocked_on_windows_when_unix_sockets_are_allowed():
     disable_socket(allow_unix_socket=True)
     try:
-        with pytest.raises(SocketBlockedError):
-            first, second = socket.socketpair()
-            with first, second:
-                pass
+        with (
+            pytest.raises(SocketBlockedError),
+            pytest.warns(SocketBlockedWarning),
+        ):
+            socket.socketpair()
     finally:
         enable_socket()
 

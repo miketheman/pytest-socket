@@ -146,12 +146,12 @@ def test_enable_socket_marker(pytester):
         assert_socket_blocked(result)
 
 
-def test_urllib_succeeds_by_default(pytester):
-    pytester.makepyfile("""
+def test_urllib_succeeds_by_default(pytester, httpserver):
+    pytester.makepyfile(f"""
         from urllib.request import urlopen
 
-        def test_disable_socket_urllib():
-            assert urlopen('https://http.codes/200').getcode() == 200
+        def test_urllib():
+            assert urlopen('{httpserver.url}/').getcode() == 200
         """)
     result = pytester.runpytest()
     result.assert_outcomes(passed=1)
@@ -159,15 +159,14 @@ def test_urllib_succeeds_by_default(pytester):
         assert_socket_blocked(result)
 
 
-def test_enabled_urllib_succeeds(pytester):
-    pytester.makepyfile("""
+def test_enabled_urllib_succeeds(pytester, httpserver):
+    pytester.makepyfile(f"""
         import pytest
-        import pytest_socket
         from urllib.request import urlopen
 
         @pytest.mark.enable_socket
-        def test_disable_socket_urllib():
-            assert urlopen('https://http.codes/200').getcode() == 200
+        def test_urllib():
+            assert urlopen('{httpserver.url}/').getcode() == 200
         """)
     result = pytester.runpytest("--disable-socket")
     result.assert_outcomes(passed=1)
@@ -175,14 +174,14 @@ def test_enabled_urllib_succeeds(pytester):
         assert_socket_blocked(result)
 
 
-def test_disabled_urllib_fails(pytester):
-    pytester.makepyfile("""
+def test_disabled_urllib_fails(pytester, httpserver):
+    pytester.makepyfile(f"""
         import pytest
         from urllib.request import urlopen
 
         @pytest.mark.disable_socket
-        def test_disable_socket_urllib():
-            assert urlopen('https://http.codes/200').getcode() == 200
+        def test_urllib():
+            assert urlopen('{httpserver.url}/').getcode() == 200
         """)
     result = pytester.runpytest()
     assert_socket_blocked(result)
@@ -246,7 +245,6 @@ def test_mix_and_match(pytester, socket_enabled):
 def test_socket_subclass_is_still_blocked(pytester):
     pytester.makepyfile("""
         import pytest
-        import pytest_socket
         import socket
 
         @pytest.mark.disable_socket

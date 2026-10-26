@@ -19,7 +19,7 @@ mypy is **not** a pre-commit hook; CI runs it separately, so run `uv run mypy sr
 
 ## Mutation testing
 
-`make mutmut` fails on any surviving mutant. Mutating the plugin's own pytest hooks crashes the inner pytest, so roughly 20 mutants report `segfault` (count varies run to run); the gate tolerates those. mutmut lives in its own `mutmut` dependency group, not `dev`: its libcst dependency lags new Python releases and has no 3.13t wheel.
+`make mutmut` fails on any surviving mutant. Mutating the plugin's own pytest hooks crashes the inner pytest, so roughly 20 mutants report `segfault` (count varies run to run); the gate tolerates those. mutmut lives in its own `mutmut` dependency group, not `dev`: its libcst dependency lags new Python releases.
 
 ## CI
 
