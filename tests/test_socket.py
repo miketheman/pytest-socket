@@ -342,16 +342,17 @@ def test_constructing_exceptions_does_not_warn():
 
 
 @pytest.mark.parametrize(
-    "exc",
+    "exception_type, args",
     [
-        pytest.param(SocketBlockedError(), id="SocketBlockedError"),
+        pytest.param(SocketBlockedError, (), id="SocketBlockedError"),
         pytest.param(
-            SocketConnectBlockedError(["0.0.0.0", "127.0.0.1"], "192.0.80.239"),
+            SocketConnectBlockedError,
+            (["0.0.0.0", "127.0.0.1"], "192.0.80.239"),
             id="SocketConnectBlockedError",
         ),
     ],
 )
-def test_exceptions_are_pickleable(exc):
+def test_exceptions_are_pickleable(exception_type, args):
     """Exceptions must survive a pickle round-trip.
 
     Multiprocessing test runners (Django's ``--parallel``, pytest-xdist)
@@ -360,6 +361,7 @@ def test_exceptions_are_pickleable(exc):
     """
     with warnings.catch_warnings():
         warnings.simplefilter("error")
+        exc = exception_type(*args)
         restored = pickle.loads(pickle.dumps(exc))
     assert type(restored) is type(exc)
     assert restored.args == exc.args
@@ -455,3 +457,156 @@ def test_socket_disabled_fixture_blocks_during_setup(pytester):
     result = pytester.runpytest()
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines("*SocketBlockedError*")
+
+
+def test_disable_socket_blocks_import_and_sessionfinish(pytester):
+    """`--disable-socket` blocks TCP sockets opened while importing a test
+    module and inside `pytest_sessionfinish`.
+
+    A raw connect error such as ConnectionRefusedError means the guard was
+    not installed. `atexit` is intentionally not covered.
+    """
+    pytester.makeconftest("""
+        import socket
+
+        def pytest_sessionfinish(session, exitstatus):
+            try:
+                socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            except Exception as exc:
+                print(f"SESSIONFINISH={type(exc).__name__}")
+        """)
+    pytester.makepyfile("""
+        import socket
+
+        socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        def test_not_collected():
+            pass
+        """)
+    result = pytester.runpytest("--disable-socket", "-p", "no:randomly")
+    stdout = result.stdout.str()
+    assert "pytest_socket.SocketBlockedError" in stdout
+    assert "SESSIONFINISH=SocketBlockedError" in stdout
+    assert "ConnectionRefusedError" not in stdout
+
+
+def test_enable_socket_does_not_leak_past_the_test(pytester):
+    """A per-test enable must not leave sockets open for a later test or
+    for `pytest_sessionfinish`."""
+    pytester.makeconftest("""
+        import socket
+
+        def pytest_sessionfinish(session, exitstatus):
+            try:
+                socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            except Exception as exc:
+                print(f"SESSIONFINISH={type(exc).__name__}")
+        """)
+    pytester.makepyfile("""
+        import socket
+        import pytest
+
+        @pytest.mark.enable_socket
+        def test_enabled():
+            socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        def test_later():
+            socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        """)
+    result = pytester.runpytest("--disable-socket", "-p", "no:randomly")
+    result.assert_outcomes(passed=1, failed=1)
+    stdout = result.stdout.str()
+    assert "pytest_socket.SocketBlockedError" in stdout
+    assert "SESSIONFINISH=SocketBlockedError" in stdout
+    assert "ConnectionRefusedError" not in stdout
+
+
+def test_allow_hosts_marker_overrides_disable_socket_for_one_test(pytester):
+    """``--disable-socket`` plus ``@pytest.mark.allow_hosts`` must still
+    create a socket. Only ``connect`` is filtered. ``pytest_sessionfinish``
+    returns to the disabled baseline.
+    """
+    pytester.makeconftest("""
+        import socket
+
+        def pytest_sessionfinish(session, exitstatus):
+            try:
+                socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            except Exception as exc:
+                print(f"SESSIONFINISH={type(exc).__name__}")
+        """)
+    pytester.makepyfile("""
+        import socket
+        import pytest
+
+        @pytest.mark.allow_hosts("127.0.0.1")
+        def test_allowed_host_can_open_a_socket():
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            try:
+                sock.connect(("127.0.0.1", 1))
+            except OSError:
+                pass
+            finally:
+                sock.close()
+        """)
+    result = pytester.runpytest("--disable-socket", "-p", "no:randomly")
+    result.assert_outcomes(passed=1)
+    stdout = result.stdout.str()
+    assert "SESSIONFINISH=SocketBlockedError" in stdout
+    assert "pytest_socket.SocketBlockedError" not in stdout
+
+
+def test_socket_enabled_fixture_allows_earlier_fixture_setup(pytester):
+    pytester.makepyfile("""
+        import socket
+        import pytest
+
+        @pytest.fixture
+        def earlier_fixture():
+            with socket.socket():
+                pass
+
+        def test_enabled(earlier_fixture, socket_enabled):
+            pass
+        """)
+    result = pytester.runpytest("--disable-socket", "-p", "no:randomly")
+    result.assert_outcomes(passed=1)
+
+
+@pytest.mark.parametrize(
+    "allow_unix",
+    [False, pytest.param(True, marks=unix_sockets_only)],
+)
+def test_cli_allow_hosts_applies_during_import_and_sessionfinish(pytester, allow_unix):
+    pytester.makeconftest(f"""
+        import socket
+        import pytest
+        from pytest_socket import SocketConnectBlockedError
+
+        def check_cli_policy():
+            with socket.socket() as sock:
+                with pytest.raises(SocketConnectBlockedError):
+                    sock.connect(("127.0.0.2", 1))
+            if {allow_unix!r}:
+                with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
+                    with pytest.raises(FileNotFoundError):
+                        sock.connect("pytest-socket-no-such-file.sock")
+
+        def pytest_sessionfinish(session, exitstatus):
+            check_cli_policy()
+            print("SESSIONFINISH_POLICY_OK")
+        """)
+    pytester.makepyfile("""
+        from conftest import check_cli_policy
+
+        check_cli_policy()
+
+        def test_collected():
+            pass
+        """)
+    args = ["--disable-socket", "--allow-hosts=127.0.0.1", "-p", "no:randomly"]
+    if allow_unix:
+        args.append("--allow-unix-socket")
+    result = pytester.runpytest(*args)
+    result.assert_outcomes(passed=1)
+    assert "SESSIONFINISH_POLICY_OK" in result.stdout.str()

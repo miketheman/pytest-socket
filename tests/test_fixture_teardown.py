@@ -204,6 +204,40 @@ def test_policy_changed_by_the_test_body_does_not_reach_earlier_fixtures(pyteste
     )
 
 
+@pytest.mark.parametrize("register", ["request.addfinalizer", "factory"])
+def test_runtime_finalizers_run_before_cli_baseline_is_restored(pytester, register):
+    pytester.makeconftest("""
+        from probe import state
+
+        def pytest_sessionfinish(session, exitstatus):
+            state("sessionfinish")
+        """)
+    pytester.makepyfile(
+        probe=PROBE,
+        test_finalizer=f"""
+            import pytest
+            from probe import state
+
+            @pytest.fixture
+            def factory(request):
+                return request.addfinalizer
+
+            def test_it(request, factory):
+                state("call")
+                {register}(lambda: state("runtime finalizer"))
+            """,
+    )
+    result = run(pytester, "--disable-socket")
+    result.assert_outcomes(passed=1)
+    result.stdout.fnmatch_lines(
+        [
+            "*call: blocked*",
+            "*runtime finalizer: open*",
+            "*sessionfinish: blocked*",
+        ]
+    )
+
+
 def test_allow_hosts_applies_to_fixture_teardown(pytester, httpserver):
     pytester.makepyfile(f"""
         import socket
