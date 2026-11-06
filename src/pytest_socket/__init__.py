@@ -279,9 +279,10 @@ if _true_sendmsg is not None:
 def _is_ours(value: Any) -> bool:
     """Whether ``value`` is a real socket function or one of our guards, as
     opposed to another tool's patch."""
-    return any(value is ours for ours in _OURS) or getattr(
-        value, "_pytest_socket_guard", False
-    ) is True
+    return (
+        any(value is ours for ours in _OURS)
+        or getattr(value, "_pytest_socket_guard", False) is True
+    )
 
 
 @pytest.hookimpl(hookwrapper=True, tryfirst=True)
