@@ -156,6 +156,52 @@ blocked, even if a later test that uses it allows the network. If its teardown
 needs the network, call `pytest_socket.enable_socket()` at the start of the
 teardown code.
 
+Q: Why do tests that touch `asyncio` fail on Windows before they even start?
+
+A: On Windows `_socket` provides no `socketpair()`, so the standard library
+builds the pair out of two `AF_INET` sockets connected over `127.0.0.1`.
+With `--disable-socket` that loopback connection is blocked, so
+`asyncio.new_event_loop()` raises `SocketBlockedError` and every async test
+fails at setup, whatever the test itself does.
+
+Allow the loopback the event loop needs:
+
+```console
+pytest --disable-socket --allow-hosts=127.0.0.1,::1
+```
+
+or in your pytest configuration:
+
+```ini
+[pytest]
+addopts = --disable-socket --allow-hosts=127.0.0.1,::1
+```
+
+This workaround is wider than it looks: `pytest_runtest_setup` only calls
+`disable_socket()` when the global switch is on and no allow-list was given, so
+with any `--allow-hosts` value `socket.socket()` and the DNS helpers stay
+unpatched for that test. Only `connect()` keeps the allow-list check:
+
+```python
+import socket
+
+import pytest
+
+from pytest_socket import SocketConnectBlockedError
+
+
+def test_outbound_connect_is_still_blocked():
+    with pytest.raises(SocketConnectBlockedError):
+        socket.create_connection(("192.0.2.1", 80), timeout=2)
+```
+
+If you need socket creation and DNS to stay blocked, do not use an allow-list
+for this: exempting only the pair that `socketpair()` builds is the narrower
+fix, and it is tracked in #568.
+
+`--allow-unix-socket` does not help here: the pair is not a Unix socket, and
+allowing it changes nothing on Windows.
+
 ## Contributing
 
 Contributions are very welcome. Tests can be run with
