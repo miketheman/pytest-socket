@@ -178,6 +178,42 @@ def pytest_configure(config: pytest.Config) -> None:
         allow_unix_socket=config.getoption("--allow-unix-socket"),
         allow_hosts=config.getoption("--allow-hosts"),
     )
+    # Collection imports test modules after configure. The CLI policy has to
+    # be in place before that, not only inside pytest_runtest_setup.
+    _apply_session_socket_baseline(config)
+
+
+def _apply_session_socket_baseline(config: pytest.Config) -> None:
+    """Install the CLI socket policy that holds outside an individual test.
+
+    Per-test markers and fixtures override this during that test. Teardown
+    puts it back so an enable cannot leak into the next test or into
+    ``pytest_sessionfinish``. ``pytest_unconfigure`` drops it again, which
+    leaves ``atexit`` handlers unguarded.
+    """
+    socket_config = config.stash.get(_STASH_KEY, None)
+    if socket_config is None:
+        return
+
+    _remove_restrictions()
+    if socket_config.socket_force_enabled:
+        return
+
+    hosts = socket_config.allow_hosts
+    if hosts:
+        socket_allow_hosts(
+            hosts,
+            allow_unix_socket=socket_config.allow_unix_socket,
+            resolution_cache=socket_config.resolution_cache,
+        )
+        return
+
+    if socket_config.socket_disabled:
+        disable_socket(allow_unix_socket=socket_config.allow_unix_socket)
+
+
+def pytest_unconfigure() -> None:
+    _remove_restrictions()
 
 
 def pytest_runtest_setup(item: pytest.Item) -> None:
@@ -233,6 +269,14 @@ def _resolve_allow_hosts(item: pytest.Item) -> str | list[str] | None:
     elif cli_restrictions:
         hosts = cli_restrictions
 
+    # ``socket_allow_hosts`` only replaces ``connect``. The session baseline
+    # for ``--disable-socket`` has already swapped in GuardedSocket, whose
+    # ``__new__`` raises before connect. Put the real class back first so an
+    # allow-list can create a socket and then filter the connect, matching
+    # the behavior from before the baseline existed.
+    if isinstance(hosts, (str, list)):
+        _remove_restrictions()
+
     socket_allow_hosts(
         hosts,
         allow_unix_socket=socket_config.allow_unix_socket,
@@ -241,8 +285,23 @@ def _resolve_allow_hosts(item: pytest.Item) -> str | list[str] | None:
     return hosts
 
 
-def pytest_runtest_teardown() -> None:
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_teardown(item: pytest.Item) -> Iterator[None]:
+    """Restore the session baseline after fixture finalizers.
+
+    Lift per-test restrictions first. The fixture setup hook applies each
+    fixture's setup-time policy around its own finalizers.
+
+    A plain hook would run in undefined order relative to pytest's own
+    teardown. Wrapping it, and restoring in ``finally``, puts the CLI policy
+    back even when a finalizer raises, so one test's ``enable_socket`` cannot
+    stay in force through ``pytest_sessionfinish``.
+    """
     _remove_restrictions()
+    try:
+        yield
+    finally:
+        _apply_session_socket_baseline(item.config)
 
 
 # Every attribute pytest-socket patches, as (owner, name).
