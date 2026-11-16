@@ -329,7 +329,12 @@ def test_blocked_call_raises_with_warnings_as_errors(pytester):
                 socket.socket()
         """)
     result = pytester.runpytest(
-        "-W", "error", "-W", "ignore::pytest_socket.SocketBlockedWarning"
+        "-p",
+        "no:codspeed",
+        "-W",
+        "error",
+        "-W",
+        "ignore::pytest_socket.SocketBlockedWarning",
     )
     result.assert_outcomes(passed=1)
 

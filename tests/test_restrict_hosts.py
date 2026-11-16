@@ -539,7 +539,9 @@ def test_blocked_connect_does_not_leak_socket(pytester):
                 urlopen("http://1.2.3.5/")
     """)
 
-    result = pytester.runpytest("-W", "error", "--allow-hosts=1.2.3.4")
+    result = pytester.runpytest(
+        "-p", "no:codspeed", "-W", "error", "--allow-hosts=1.2.3.4"
+    )
     result.assert_outcomes(passed=1)
 
 
