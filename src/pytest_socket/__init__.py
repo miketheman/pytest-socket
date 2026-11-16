@@ -7,12 +7,15 @@ import warnings
 from collections import defaultdict
 from collections.abc import Iterator
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, NoReturn
 
 import pytest
 
 _true_socket = socket.socket
 _true_connect = socket.socket.connect
+_true_connect_ex = socket.socket.connect_ex
+_true_sendto = socket.socket.sendto
+_true_sendmsg = getattr(socket.socket, "sendmsg", None)
 _true_getaddrinfo = socket.getaddrinfo
 _true_gethostbyname = socket.gethostbyname
 
@@ -38,14 +41,16 @@ class SocketConnectBlockedError(RuntimeError):
         self,
         allowed: list[str],
         host: str | None,
+        call: str = "connect",
         *_args: Any,
         **_kwargs: Any,
     ) -> None:
         self._allowed = allowed
         self._host = host
+        self._call = call
         allowed_str = ",".join(allowed)
         msg = (
-            "A test tried to use socket.socket.connect() "
+            f"A test tried to use socket.socket.{call}() "
             f'with host "{host}" (allowed: "{allowed_str}").'
         )
         super().__init__(msg)
@@ -55,7 +60,7 @@ class SocketConnectBlockedError(RuntimeError):
         # survives pickling by multiprocessing test runners (e.g. pytest-xdist,
         # Django's `--parallel`). The default `BaseException.__reduce__` would
         # replay `self.args` (the formatted message) and miss `host`.
-        return (self.__class__, (self._allowed, self._host))
+        return (self.__class__, (self._allowed, self._host, self._call))
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -246,29 +251,36 @@ def pytest_runtest_teardown() -> None:
 
 
 # Every attribute pytest-socket patches, as (owner, name).
-_SLOTS = (
+_SLOTS: tuple[tuple[Any, str], ...] = (
     (socket, "socket"),
     (_true_socket, "connect"),
+    (_true_socket, "connect_ex"),
+    (_true_socket, "sendto"),
     (socket, "getaddrinfo"),
     (socket, "gethostbyname"),
 )
+if _true_sendmsg is not None:
+    _SLOTS += ((_true_socket, "sendmsg"),)
+
+_OURS = [
+    _true_socket,
+    _true_connect,
+    _true_connect_ex,
+    _true_sendto,
+    _true_getaddrinfo,
+    _true_gethostbyname,
+    _guarded_getaddrinfo,
+    _guarded_gethostbyname,
+]
+if _true_sendmsg is not None:
+    _OURS.append(_true_sendmsg)
 
 
 def _is_ours(value: Any) -> bool:
     """Whether ``value`` is a real socket function or one of our guards, as
     opposed to another tool's patch."""
     return (
-        any(
-            value is ours
-            for ours in (
-                _true_socket,
-                _true_connect,
-                _true_getaddrinfo,
-                _true_gethostbyname,
-                _guarded_getaddrinfo,
-                _guarded_gethostbyname,
-            )
-        )
+        any(value is ours for ours in _OURS)
         or getattr(value, "_pytest_socket_guard", False) is True
     )
 
@@ -314,6 +326,21 @@ def host_from_connect_args(args: tuple[Any, ...]) -> str | None:
 
     if isinstance(address, tuple):
         return host_from_address(address)
+    return None
+
+
+def host_from_send_args(args: tuple[Any, ...]) -> str | None:
+    """The address of ``sendto()``/``sendmsg()`` is the trailing argument.
+
+    ``sendto(data, address)`` and ``sendto(data, flags, address)`` both end
+    with it, and ``sendmsg`` only takes one when a destination is given, so
+    the last tuple or string in the call is the address to check.
+    """
+    for arg in reversed(args):
+        if isinstance(arg, tuple):
+            return host_from_address(arg)
+        if isinstance(arg, str):
+            return arg
     return None
 
 
@@ -411,32 +438,77 @@ def socket_allow_hosts(
         + [str(net) for net in networks]
     )
 
-    def guarded_connect(inst: socket.socket, *args: Any) -> None:
-        host = host_from_connect_args(args)
-        if host in allowed_ip_hosts_and_hostnames or (
-            _is_unix_socket(inst.family) and allow_unix_socket
-        ):
-            return _true_connect(inst, *args)
+    def is_allowed(inst: socket.socket, host: str | None) -> bool:
+        if host in allowed_ip_hosts_and_hostnames:
+            return True
+
+        if _is_unix_socket(inst.family) and allow_unix_socket:
+            return True
 
         if host and networks and is_ipaddress(host):
             ip = ipaddress.ip_address(host)
-            if any(ip in net for net in networks):
-                return _true_connect(inst, *args)
+            return any(ip in net for net in networks)
 
+        return False
+
+    def blocked(inst: socket.socket, host: str | None, call: str) -> NoReturn:
         # Close the real socket before raising. The blocking error is a
         # RuntimeError, which bypasses callers' `except OSError` cleanup
         # (e.g. socket.create_connection), so the fd would otherwise leak.
         inst.close()
-        raise _warn_blocked(SocketConnectBlockedError(allowed_list, host))
+        raise _warn_blocked(SocketConnectBlockedError(allowed_list, host, call))
 
-    guarded_connect._pytest_socket_guard = True  # type: ignore[attr-defined]
-    socket.socket.connect = guarded_connect  # type: ignore[assignment,method-assign]
+    def guarded_connect(inst: socket.socket, *args: Any) -> None:
+        host = host_from_connect_args(args)
+        if is_allowed(inst, host):
+            return _true_connect(inst, *args)
+
+        blocked(inst, host, "connect")
+
+    def guarded_connect_ex(inst: socket.socket, *args: Any) -> int:
+        host = host_from_connect_args(args)
+        if is_allowed(inst, host):
+            return _true_connect_ex(inst, *args)
+
+        blocked(inst, host, "connect_ex")
+
+    def guarded_sendto(inst: socket.socket, *args: Any) -> Any:
+        host = host_from_send_args(args)
+        if is_allowed(inst, host):
+            return _true_sendto(inst, *args)
+
+        blocked(inst, host, "sendto")
+
+    def guarded_sendmsg(inst: socket.socket, *args: Any) -> Any:
+        host = host_from_send_args(args)
+        if is_allowed(inst, host):
+            assert _true_sendmsg is not None
+            return _true_sendmsg(inst, *args)
+
+        blocked(inst, host, "sendmsg")
+
+    guards = (
+        ("connect", guarded_connect),
+        ("connect_ex", guarded_connect_ex),
+        ("sendto", guarded_sendto),
+    )
+    for name, guard in guards:
+        setattr(guard, "_pytest_socket_guard", True)
+        setattr(socket.socket, name, guard)
+
+    if _true_sendmsg is not None:
+        setattr(guarded_sendmsg, "_pytest_socket_guard", True)
+        setattr(socket.socket, "sendmsg", guarded_sendmsg)
 
 
 def _remove_restrictions() -> None:
     """restore socket.socket.* to allow access to the Internet. useful in testing."""
     socket.socket = _true_socket  # type: ignore[misc]
     socket.socket.connect = _true_connect  # type: ignore[method-assign]
+    socket.socket.connect_ex = _true_connect_ex  # type: ignore[method-assign]
+    socket.socket.sendto = _true_sendto  # type: ignore[method-assign]
+    if _true_sendmsg is not None:
+        setattr(socket.socket, "sendmsg", _true_sendmsg)
     if socket.getaddrinfo is _guarded_getaddrinfo:
         socket.getaddrinfo = _true_getaddrinfo
     if socket.gethostbyname is _guarded_gethostbyname:
